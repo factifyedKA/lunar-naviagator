@@ -2,13 +2,17 @@
 
 import { SITES, GROUPS, CUSTOM_ID, LAT_MIN, LAT_MAX, getSite } from './sites.js';
 import { getState, setState, subscribe, initStateFromUrl, HOUR, DAY, WINDOW_DAYS } from './state.js';
-import { moonFrame, skyAt, subEarthPoint, subSolarPoint, discFractionVisible, meanEarthAzimuth, sunEarthSkySeparation } from './astro.js';
+import { moonFrame, skyAt, subEarthPoint, subSolarPoint, meanEarthAzimuth } from './astro.js';
+import { visibility } from './metrics.js';
+import { data, loadData, siteModel, horizonNote } from './model.js';
+import { initTimelineView, renderTimelineView } from './timeline-view.js';
 import { createMap, ZOOMS } from './map.js';
 import { createSky } from './horizon.js';
 import { $, el, clamp, fmtLat, fmtLon, fmtSigned, fmtDateTime, fmtDate, compass } from './ui.js';
 
 const VIEWS = [
   { id: 'explore', label: 'Explore' },
+  { id: 'timeline', label: 'Timeline & scores' },
   { id: 'about', label: 'About' },
 ];
 const MINUTE = 60e3;
@@ -79,6 +83,9 @@ function wireControls() {
     placeCustom(lat, lon);
   });
   $('#hz').addEventListener('input', (ev) => setState({ hz: Number(ev.target.value) }));
+  $('#hm-terrain').addEventListener('click', () => setState({ hm: 'terrain' }));
+  $('#hm-flat').addEventListener('click', () => setState({ hm: 'flat' }));
+  $('#emin').addEventListener('input', (ev) => setState({ emin: Number(ev.target.value) }));
 
   // time controls
   $('#play').addEventListener('click', () => setPlaying(!getState().playing));
@@ -134,19 +141,19 @@ function tick(now) {
 
 // ---------- Sun/Earth paths over the slider window (cached) ----------
 const trailCache = { framesKey: null, frames: [], siteKey: null, trail: null };
-function getTrail(t0, lat, lon) {
+function getTrail(t0, lat, lon, heightKm) {
   if (trailCache.framesKey !== t0) {
     trailCache.frames = [];
     for (let h = 0; h <= WINDOW_DAYS * 24; h++) trailCache.frames.push(moonFrame(t0 + h * HOUR));
     trailCache.framesKey = t0;
     trailCache.siteKey = null;
   }
-  const key = `${t0}|${lat}|${lon}`;
+  const key = `${t0}|${lat}|${lon}|${heightKm}`;
   if (trailCache.siteKey !== key) {
     const sun = [];
     const earth = [];
     for (const f of trailCache.frames) {
-      const p = skyAt(f, lat, lon);
+      const p = skyAt(f, lat, lon, heightKm);
       sun.push([p.sun.az, p.sun.el]);
       earth.push([p.earth.az, p.earth.el]);
     }
@@ -197,6 +204,13 @@ function render() {
   if (document.activeElement !== $('#custom-lon')) $('#custom-lon').value = hasCustom ? s.lon : '';
   $('#hz').value = s.hz;
   $('#hz-out').textContent = fmtSigned(s.hz);
+  $('#hm-terrain').setAttribute('aria-pressed', String(s.hm !== 'flat'));
+  $('#hm-flat').setAttribute('aria-pressed', String(s.hm === 'flat'));
+  $('#hz-box').hidden = s.hm !== 'flat';
+  $('#emin').value = s.emin;
+  $('#emin-out').textContent = `${s.emin}°`;
+  const model = siteModel(s, site, requestRender);
+  $('#hm-note').textContent = horizonNote(model);
 
   // site card
   $('#site-group').textContent = site.group === 'custom' ? 'Your point'
@@ -208,32 +222,40 @@ function render() {
   approx.textContent = '';
   if (site.approx) {
     approx.append(el('span', { class: 'badge', text: 'Approximate position' }),
-      ' NASA defines this as a region about 15 km across; the marker is near its centre.');
+      site.group === 'reference' ? ' A reference point from published lunar-pole studies; treat its coordinates as approximate.'
+        : ' NASA defines this as a region about 15 km across; the marker is near its centre.');
   } else if (site.group !== 'custom') {
     approx.append(el('span', { class: 'badge ok', text: 'Exact position' }));
   }
 
+  // where the terrain calculation actually stands
+  $('#site-terrain').textContent = model.kind !== 'terrain' ? ''
+    : `Terrain viewpoint: ${fmtLat(model.lat)}, ${fmtLon(model.lon)}, ${Math.round(model.heightM).toLocaleString('en-US')} m above the Moon's mean radius`
+      + (site.snapKm ? ` — the highest ground within ${site.snapKm} km of the marker, plus a 2 m mast.` : ', plus a 2 m mast.');
+
+  if (view === 'timeline') { renderTimelineView(); return; }
   if (view !== 'explore') return;
 
   // ---- the science: where are the Sun and the Earth right now? ----
   const frame = moonFrame(s.t);
-  const now = skyAt(frame, site.lat, site.lon);
-  const sunRel = now.sun.el - s.hz;       // height above the local horizon
-  const earthRel = now.earth.el - s.hz;
-  const sunFrac = discFractionVisible(sunRel, now.sun.radius);
+  const now = skyAt(frame, model.lat, model.lon, model.heightKm);
+  const vis = visibility(now, model, s.emin);
+  const sunRel = vis.sunH;                // height above the local horizon
+  const earthRel = vis.earthH;
+  const sunFrac = vis.sunFrac;
 
   // read-outs
   $('#now-time').textContent = fmtDateTime(s.t);
   $('#sun-line').textContent = aboveBelow('Sun', sunRel);
   $('#sun-sub').textContent = direction(now.sun);
-  const eclipse = sunFrac > 0.001 && sunEarthSkySeparation(now) < now.earth.radius + now.sun.radius;
-  if (eclipse) setChip($('#sun-chip'), 'part', '◐ Eclipse — the Earth is covering the Sun, little or no solar power');
+  if (vis.eclipse) setChip($('#sun-chip'), 'part', '◐ Eclipse — the Earth is covering the Sun, little or no solar power');
   else if (sunFrac >= 0.999) setChip($('#sun-chip'), 'on', '✔ Full Sun — solar power available');
   else if (sunFrac > 0.001) setChip($('#sun-chip'), 'part', `◐ Sun partly hidden — ${Math.round(sunFrac * 100)}% of its disc shows`);
   else setChip($('#sun-chip'), 'off', '✖ Sun hidden — no solar power');
   $('#earth-line').textContent = aboveBelow('Earth', earthRel);
   $('#earth-sub').textContent = direction(now.earth);
-  if (earthRel >= 0) setChip($('#earth-chip'), 'on', '✔ Earth in view — direct radio link possible');
+  if (vis.earthUp) setChip($('#earth-chip'), 'on', '✔ Earth in view — direct radio link possible');
+  else if (earthRel >= 0) setChip($('#earth-chip'), 'part', `◐ Earth is up, but below your ${s.emin}° margin — no reliable link`);
   else setChip($('#earth-chip'), 'off', '✖ Earth hidden — no direct radio link');
 
   // map
@@ -242,23 +264,25 @@ function render() {
   const subSun = subSolarPoint(frame);
   map.draw({
     zoom: s.zoom, site: s.site, custom: hasCustom ? { lat: s.lat, lon: s.lon } : null, drop: s.drop,
-    light: { sunLon: subSun.lon, sunLat: subSun.lat, earthLon: subEarthPoint(frame).lon },
+    light: { sunLon: subSun.lon, sunLat: subSun.lat, earthLon: subEarthPoint(frame).lon }, relief: data.relief,
   });
   const edge = Math.abs(ZOOMS[s.zoom]);
   $('#map-caption').textContent = `Polar map from ${edge}°S to the pole; the side facing Earth is at the top. `
     + 'Arrows on the rim point towards the Sun and the Earth right now; the darker half is night on a smooth Moon '
-    + '(real terrain shadows are not shown). Grey rings are named craters (schematic outlines, not a photo).';
+    + '(real terrain shadows are not shown). '
+    + (data.relief ? 'Background: shaded relief made from NASA LRO/LOLA elevation data, with artificial lighting.'
+      : 'Grey rings are named craters (schematic outlines, not a photo).');
 
   // horizon view
   $('#sky-site').textContent = site.name;
   const { stretch } = sky.draw({
-    lat: site.lat, hz: s.hz, centerAz: meanEarthAzimuth(site.lat, site.lon),
-    sun: now.sun, earth: now.earth, trail: getTrail(s.t0, site.lat, site.lon),
+    lat: model.lat, hz: model.hz, mask: model.mask, centerAz: meanEarthAzimuth(model.lat, model.lon),
+    sun: now.sun, earth: now.earth, trail: getTrail(s.t0, model.lat, model.lon, model.heightKm),
   });
   $('#sky-caption').textContent = `Full 360° view of the horizon from ${site.name} at ${fmtDateTime(s.t)}. `
     + `Heights are stretched about ${Math.max(1, Math.round(stretch))}× so small angles are easy to see. `
     + `Dotted lines: path of the Sun (yellow) and the Earth (blue) from ${fmtDate(s.t0)} to ${fmtDate(s.t0 + WINDOW_DAYS * DAY)}. `
-    + 'The horizon is a flat-ground simplification; real hills and crater rims are not included.';
+    + horizonNote(model);
 
   // time controls
   $('#play').textContent = s.playing ? '❚❚ Pause' : '▶ Play';
@@ -279,7 +303,7 @@ function render() {
 }
 
 // ---------- start ----------
-function start() {
+async function start() {
   const s = initStateFromUrl();
   hasCustom = s.site === CUSTOM_ID;
   buildTabs();
@@ -290,8 +314,12 @@ function start() {
   });
   sky = createSky($('#sky'));
   wireControls();
+  initTimelineView(requestRender);
   subscribe(requestRender);
-  render();
+  render();                                   // show the page at once…
+  const ok = await loadData(requestRender);   // …then add terrain and pre-computed results
+  if (!ok) toast('Terrain data could not be loaded, so a flat horizon is used.');
+  requestRender();
 }
 
 start();

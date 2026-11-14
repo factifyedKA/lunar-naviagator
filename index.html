@@ -50,11 +50,25 @@
       </section>
 
       <section>
-        <h2><span class="step">3</span> Local horizon height</h2>
-        <label class="field" for="hz">Hills or dips around the site: <output id="hz-out" for="hz">0.0°</output></label>
-        <input type="range" id="hz" min="-3" max="5" step="0.1" value="0">
-        <p class="note"><strong>Simplification:</strong> this tool uses a flat horizon, not real terrain.
-          Raise it to imitate surrounding hills; lower it to imitate standing on a peak.</p>
+        <h2><span class="step">3</span> Horizon model</h2>
+        <div class="seg wide" role="group" aria-label="Horizon model">
+          <button type="button" class="btn" id="hm-terrain" aria-pressed="true">Real terrain</button>
+          <button type="button" class="btn" id="hm-flat" aria-pressed="false">Flat</button>
+        </div>
+        <p class="note" id="hm-note"></p>
+        <div id="hz-box" hidden>
+          <label class="field" for="hz"><span>Flat horizon height: <output id="hz-out" for="hz">0.0°</output></span></label>
+          <input type="range" id="hz" min="-3" max="5" step="0.1" value="0">
+          <p class="note"><strong>Simplification:</strong> raise it to imitate surrounding hills; lower it to
+            imitate standing on a peak.</p>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="step">4</span> Radio link margin</h2>
+        <label class="field" for="emin"><span>Earth must be at least <output id="emin-out" for="emin">0°</output> above the horizon</span></label>
+        <input type="range" id="emin" min="0" max="10" step="0.5" value="0">
+        <p class="note">Antennas often need the Earth a few degrees clear of the ground.</p>
       </section>
     </aside>
 
@@ -94,6 +108,7 @@
               <p class="coords-line" id="site-coords"></p>
               <p id="site-blurb"></p>
               <p class="badge-line" id="site-approx"></p>
+              <p class="badge-line" id="site-terrain"></p>
             </div>
 
             <div class="card now-card">
@@ -152,6 +167,84 @@
         </div>
       </section>
 
+      <!-- TIMELINE & SCORES VIEW -->
+      <section class="view" id="view-timeline" aria-labelledby="timeline-title" hidden>
+        <h2 class="visually-hidden" id="timeline-title">Timeline and scores</h2>
+        <details class="hint" open>
+          <summary>What am I looking at?</summary>
+          <p>This is a calendar of <strong>power and radio contact</strong> for the chosen site. A lander needs
+            <strong>sunlight</strong> for its solar panels and a clear view of the <strong>Earth</strong> to talk
+            to mission control. Coloured bars show when each is available; gaps are times the site must survive
+            on batteries or stay silent. The scores below turn the calendar into numbers you can compare.</p>
+        </details>
+
+        <div class="card">
+          <div class="card-head"><h3>Power and communication timeline · <span id="tl-site"></span></h3></div>
+          <div class="timebar">
+            <label class="field time-field">Start date (UTC)
+              <input type="date" id="tl-start" min="1970-01-02" max="2098-12-31">
+            </label>
+            <label class="field time-field">Length
+              <select id="tl-days">
+                <option value="30">30 days</option><option value="60">60 days</option><option value="90">90 days</option>
+                <option value="180">180 days</option><option value="365">1 year</option>
+              </select>
+            </label>
+            <button type="button" class="btn" id="tl-today">Start today</button>
+          </div>
+          <div class="chart-wrap">
+            <p class="busy" id="tl-busy" role="status">Calculating…</p>
+            <canvas id="tl-chart" class="chart" role="img" tabindex="0" aria-label="Timeline chart"></canvas>
+          </div>
+          <div class="cursor-row">
+            <p id="tl-cursor" class="cursor-line"></p>
+            <button type="button" class="btn" id="tl-goto" hidden>Show this moment in Explore</button>
+          </div>
+          <p class="caption" id="tl-caption"></p>
+        </div>
+
+        <div class="card">
+          <h3>The five key numbers</h3>
+          <div class="tiles" id="tl-tiles"></div>
+          <p class="caption">Calculated for the date range above. “Sunlit” averages how much of the Sun's disc is in view, the same measure NASA illumination studies use.</p>
+        </div>
+
+        <div class="card">
+          <div class="score-head">
+            <div class="score-big" id="tl-score" aria-label="Overall score">–</div>
+            <div>
+              <h3>Overall score</h3>
+              <p id="tl-score-text"></p>
+            </div>
+          </div>
+          <details class="why" open>
+            <summary>Why this score?</summary>
+            <div class="table-wrap">
+              <table id="tl-why">
+                <thead><tr><th scope="col">Part</th><th scope="col">Measured</th><th scope="col">Mark</th><th scope="col">Weight</th><th scope="col">Points</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <p class="caption" id="tl-why-note"></p>
+          </details>
+          <h4>What matters most for your mission? <span class="note-inline">(0 = ignore, 5 = very important)</span></h4>
+          <div id="tl-weights"></div>
+          <button type="button" class="btn" id="tl-reset">Reset weights</button>
+        </div>
+
+        <div class="card" id="rank-card">
+          <h3>Whole-year ranking of all sites</h3>
+          <div class="table-wrap">
+            <table id="rank-table">
+              <thead><tr><th scope="col">#</th><th scope="col">Site</th><th scope="col">Score</th><th scope="col">Sunlit</th>
+                <th scope="col">Longest darkness</th><th scope="col">Earth visible</th><th scope="col">Longest radio gap</th><th scope="col">Both</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="caption" id="rank-caption"></p>
+        </div>
+      </section>
+
       <!-- ABOUT VIEW (expanded in a later milestone) -->
       <section class="view" id="view-about" aria-labelledby="about-title" hidden>
         <div class="card prose">
@@ -162,13 +255,17 @@
           <ul>
             <li><strong>Site positions are approximate.</strong> NASA published the candidate regions as named areas
               about 15 km across; our markers are placed near their centres and labelled “approximate”.</li>
-            <li><strong>Crater outlines are schematic</strong> circles from catalogue positions and sizes, not imagery.</li>
-            <li><strong>Flat horizon.</strong> Real mountains and crater rims are not modelled yet. You can raise or
-              lower the “local horizon height” to explore their effect.</li>
+            <li><strong>Terrain is real but coarse.</strong> Horizons come from NASA LRO/LOLA elevation data on a
+              240 m grid (960 m for points you place yourself). Boulders, small craters and anything finer than
+              the grid are not seen. The observer stands 2 m above the highest ground within 5 km of each marker
+              (1 km for the LOLA study points).</li>
+            <li><strong>Flat mode</strong> ignores terrain completely; it is there for comparison and teaching.</li>
             <li><strong>Map lighting is for a smooth ball.</strong> The day/night shading on the map ignores terrain
-              shadows.</li>
+              shadows; the relief picture uses artificial lighting from the upper left.</li>
             <li><strong>Sun and Earth sizes</strong> in the horizon view are drawn slightly enlarged so they are easy
               to see and tap.</li>
+            <li><strong>Scores are a planning aid,</strong> not a mission decision: they ignore slopes, temperature,
+              landing hazards and science value.</li>
           </ul>
           <h3>How positions are calculated</h3>
           <p>Sun and Moon positions come from the open-source <em>astronomy-engine</em> library (checked by its author

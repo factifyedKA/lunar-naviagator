@@ -15,6 +15,7 @@ const tanHalf = (lat) => Math.tan(((90 + lat) / 2) * D2R);
  * createMap(canvas, { onSelect(id), onDrop(lat, lon) })
  * returns { draw(view) } where view = { zoom, site, custom:{lat,lon}|null, drop, light }
  * light (optional) = { sunLon, sunLat, earthLon } sub-solar / sub-Earth point in degrees.
+ * relief (optional) = shaded-relief image covering 80°S–90°S (from NASA LOLA elevation).
  */
 export function createMap(canvas, handlers) {
   let g = { cx: 0, cy: 0, R: 1, outer: ZOOMS[0] }; // geometry of the last drawing
@@ -51,9 +52,16 @@ export function createMap(canvas, handlers) {
     ctx.fillStyle = surf;
     ctx.fillRect(0, 0, w, h);
 
-    // --- craters (schematic circles) ---
+    // --- real shaded relief if loaded, otherwise schematic crater circles ---
     const pxPerDeg = g.R / (90 + outer);
-    for (const f of FEATURES) {
+    if (view.relief) {
+      const r80 = (tanHalf(-80) / tanHalf(outer)) * g.R; // the picture's edge is the 80°S circle
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(view.relief, g.cx - r80, g.cy - r80, 2 * r80, 2 * r80);
+      ctx.fillStyle = 'rgba(11,15,26,0.28)'; // slightly dimmed so markers and labels stand out
+      ctx.fillRect(0, 0, w, h);
+    }
+    for (const f of view.relief ? [] : FEATURES) {
       const [x, y] = project(f.lat, f.lon);
       const r = (f.d / 2 / KM_PER_DEG) * pxPerDeg;
       const bowl = ctx.createRadialGradient(x, y, r * 0.2, x, y, r);
@@ -77,10 +85,10 @@ export function createMap(canvas, handlers) {
       const oy = g.cy + uy * off;
       const L = g.R * 2;
       const shade = ctx.createLinearGradient(ox - ux * L, oy - uy * L, ox + ux * L, oy + uy * L);
-      shade.addColorStop(0, 'rgba(4,6,14,0.72)');
-      shade.addColorStop(0.492, 'rgba(4,6,14,0.62)');
-      shade.addColorStop(0.508, 'rgba(255,236,170,0.10)');
-      shade.addColorStop(1, 'rgba(255,236,170,0.16)');
+      shade.addColorStop(0, 'rgba(4,6,14,0.62)');
+      shade.addColorStop(0.492, 'rgba(4,6,14,0.5)');
+      shade.addColorStop(0.508, 'rgba(255,236,170,0.06)');
+      shade.addColorStop(1, 'rgba(255,236,170,0.12)');
       ctx.fillStyle = shade;
       ctx.fillRect(0, 0, w, h);
     }
@@ -111,7 +119,10 @@ export function createMap(canvas, handlers) {
       const r = (f.d / 2 / KM_PER_DEG) * pxPerDeg;
       if (r < 9) continue;
       const [x, y] = project(f.lat, f.lon);
-      ctx.fillStyle = 'rgba(214,222,238,0.62)';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(8,11,20,0.75)';
+      ctx.strokeText(f.name, x, y + r * 0.5);
+      ctx.fillStyle = 'rgba(232,238,248,0.88)';
       ctx.fillText(f.name, x, y + r * 0.5);
     }
     ctx.restore();

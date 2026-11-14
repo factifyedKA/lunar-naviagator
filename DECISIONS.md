@@ -100,3 +100,48 @@ IAU Gazetteer of Planetary Nomenclature) for orientation only. They are not imag
   angle, and the total lunar eclipse of 3 March 2026 (Earth must cover the Sun).
 - **Speed:** a full year, hourly, for all 13 sites takes about 0.3 s in Node, so the
   milestone 3 timelines can be computed live as well as pre-computed.
+
+## Milestone 3 — NASA data became reachable (supersedes the "Terrain" and "Network" notes above)
+After the owner approved network access to five NASA/USGS hosts, the flat-horizon
+fallback was replaced by real terrain. Flat mode is kept as a clearly labelled option.
+
+- **Elevation data:** `LDEM_75S_240M.IMG` (LRO LOLA gridded data record, data set
+  LRO-L-LOLA-4-GDR-V1.0, NASA PDS Geosciences Node; 240 m/pixel polar stereographic,
+  75°S–90°S). The 29 MB original is not committed; `tools/build-terrain.mjs` turns it into
+  the small files in `data/`. Orientation was verified against known craters
+  (Shackleton floor −2.8 km, Malapert Massif +5.0 km, Cabeus −3.7 km).
+- **Horizon masks (`data/horizons.json`):** for each listed site, the terrain elevation
+  angle in 360 directions, ray-marched out to 300 km over the 240 m grid on a curved Moon.
+- **Where the observer stands:** 2 m above the **highest ground within 5 km of the
+  marker** for the Artemis regions (they are ~15 km across and planners favour high
+  ground), within 1 km for the LOLA study points, and exactly at the South Pole. The
+  viewpoint's coordinates and height are shown on the site card.
+- **Custom points:** horizon computed in the browser (Web Worker) from the same model
+  averaged to 960 m (`data/dem_75s_960m.bin`, 1.8 MB, loaded only when needed). Coarser,
+  and labelled as such.
+- **Peak near Cabeus B marker moved** from (−84.3, −62.0) to (−83.6, −68.6): the LOLA
+  model shows the only real peak in that area there (+4.6 km). Still labelled approximate.
+- **Map background:** shaded relief computed from the LOLA grid with artificial lighting
+  from the upper left (labelled). Day/night overlay is still for a smooth sphere.
+- **Definitions of the five key numbers**
+  - Sunlit % = average fraction of the Sun's disc above the local horizon (the measure
+    used in NASA illumination studies), reduced during eclipses by the Earth.
+  - Longest darkness = longest stretch with less than 0.1% of the disc in view.
+  - Earth visible % = time the Earth's centre is at least the chosen margin above the
+    local horizon. Longest radio gap = longest stretch without that.
+  - Both % = time with any Sun and an Earth link together.
+- **Composite score** = weighted average of five 0–100 marks: the three percentages as
+  they are; for longest darkness and longest radio gap 0 h = 100 and ≥ 15 days = 0
+  (15 days ≈ a full lunar night). Default weights 3, 2, 2, 1, 2. The app shows the full
+  breakdown table ("Why this score?").
+- **Time step:** 1 hour everywhere. The Sun moves about 0.5° per hour along the horizon.
+- **Year simulation:** `tools/simulate.mjs` → `data/year-sim.json` (2027, hourly, all
+  sites, terrain and flat). Results agree with published LOLA illumination work: the
+  Connecting Ridge and Shackleton rim points come out about 92% and 87% sunlit, and
+  Malapert Massif sees the Earth 100% of the time. (Exact literature values to be quoted
+  on the Validation page after checking the source.)
+- **First JPL Horizons spot check:** Sun from Malapert Massif marker, 2026-11-20 06:00 UTC:
+  Horizons az 53.015°, el 3.979°; ours az 53.019°, el 3.978°.
+- **Network:** now reachable: ssd.jpl.nasa.gov, pgda.gsfc.nasa.gov,
+  pds-geosciences.wustl.edu, planetarynames.wr.usgs.gov, www.nasa.gov. Still not
+  reachable: the USGS data release with the official region grids.

@@ -2,10 +2,12 @@
 // by copying the link. No framework: change it with setState(), listen with subscribe().
 
 import { SITES, CUSTOM_ID, LAT_MIN, LAT_MAX } from './sites.js';
+import { DEFAULT_WEIGHTS } from './metrics.js';
 
 const HOUR = 3600e3;
 const DAY = 24 * HOUR;
 export const WINDOW_DAYS = 30; // length of the time-slider window
+export const RANGE_DAYS = [30, 60, 90, 180, 365]; // timeline lengths on offer
 export { HOUR, DAY };
 
 export const startOfUtcDay = (ms) => Math.floor(ms / DAY) * DAY;
@@ -21,6 +23,11 @@ export function defaultState(now = Date.now()) {
     hz: 0,                 // local horizon height in degrees (flat-horizon model)
     speed: 'hour',         // time-lapse speed: "hour" or "day" per second
     zoom: 0,               // map zoom level index
+    hm: 'terrain',         // horizon model: "terrain" (NASA LOLA) or "flat"
+    emin: 0,               // minimum Earth height above the horizon for a radio link (deg)
+    rs: startOfUtcDay(t),  // timeline range: start (ms, UTC midnight)
+    rd: 90,                // timeline range: length in days
+    w: DEFAULT_WEIGHTS.slice(), // weights of the five score parts (0..5 each)
     // not saved in the URL:
     playing: false,
     drop: false,           // "drop a pin" mode on the map
@@ -42,6 +49,11 @@ export function encodeState(s) {
   if (s.hz) p.set('hz', String(s.hz));
   if (s.speed !== 'hour') p.set('sp', s.speed);
   if (s.zoom) p.set('z', String(s.zoom));
+  if (s.hm === 'flat') p.set('hm', 'flat');
+  if (s.emin) p.set('em', String(s.emin));
+  p.set('rs', new Date(s.rs).toISOString().slice(0, 10));
+  if (s.rd !== 90) p.set('rd', String(s.rd));
+  if (s.w.join() !== DEFAULT_WEIGHTS.join()) p.set('w', s.w.join(','));
   return p.toString().replace(/%3A/g, ':').replace(/%2C/g, ',');
 }
 
@@ -67,6 +79,13 @@ export function decodeState(text, now = Date.now()) {
   s.hz = num(p.get('hz'), -3, 5, 0);
   if (p.get('sp') === 'day') s.speed = 'day';
   s.zoom = Math.round(num(p.get('z'), 0, 2, 0));
+  if (p.get('hm') === 'flat') s.hm = 'flat';
+  s.emin = Math.round(num(p.get('em'), 0, 10, 0) * 2) / 2;
+  const rs = Date.parse(`${p.get('rs')}T00:00Z`);
+  if (Number.isFinite(rs) && rs > Date.UTC(1970, 0, 2) && rs < Date.UTC(2099, 0, 1)) s.rs = rs;
+  if (RANGE_DAYS.includes(Number(p.get('rd')))) s.rd = Number(p.get('rd'));
+  const w = (p.get('w') || '').split(',').map(Number);
+  if (w.length === DEFAULT_WEIGHTS.length && w.every((x) => Number.isInteger(x) && x >= 0 && x <= 5)) s.w = w;
   return s;
 }
 

@@ -1,0 +1,16 @@
+{
+ "source": "NASA LRO/LOLA LDEM_75S_240M, data set LRO-L-LOLA-4-GDR-V1.0, NASA PDS Geosciences Node",
+ "coarseDem": {
+  "file": "dem_75s_960m.bin",
+  "size": 953,
+  "metresPerPixel": 960,
+  "type": "int16 little-endian, metres above the 1737.4 km sphere",
+  "minLatitude": -75
+ },
+ "relief": {
+  "file": "relief_80s.png",
+  "size": 1024,
+  "edgeLatitude": -80,
+  "note": "shaded relief with artificial lighting from the upper left"
+ }
+}

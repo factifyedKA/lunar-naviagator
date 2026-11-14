@@ -14,8 +14,8 @@ sites and dates by **where the Sun and the Earth are relative to the horizon**
 |---|-----------|--------|
 | 1 | Polar site map, site list, custom point, shareable URL state | done |
 | 2 | Sun/Earth calculations (real ephemeris + IAU Moon rotation), horizon view, time slider and time-lapse, automated tests | done |
-| 3 | Power and comms timeline, scores, composite score with weights, year simulation script + Web Worker | next |
-| 4 | Compare 2–4 sites/dates, best-window finder | |
+| 3 | Real NASA LOLA terrain horizons + relief map, power and comms timeline, scores, composite score with weights, year simulation script, Web Worker | done |
+| 4 | Compare 2–4 sites/dates, best-window finder | next |
 | 5 | Learn mode (tour, glossary, Simple/Expert), CSV/PNG export | |
 | 6 | Validation page, About page, polish, publish, SUBMISSION.md, DEMO.md | |
 | + | Extras if time remains: 3D Moon view, mission-day countdown | |
@@ -30,10 +30,17 @@ js/sites.js         candidate landing regions and map features (data only)
 js/astro.js         the science: Moon orientation, Sun/Earth elevation + azimuth
 js/map.js           south-pole map (canvas)
 js/horizon.js       horizon / sky panorama (canvas)
+js/terrain.js       LOLA elevation grid -> terrain horizon mask
+js/metrics.js       visibility over time, the five key numbers, composite score
+js/model.js         loads data files, builds the site model (terrain or flat)
+js/compute.js       sends heavy jobs to the Web Worker (js/worker.js, js/jobs.js)
+js/chart.js         timeline chart (canvas)
+js/timeline-view.js Timeline & scores view
+data/               small files generated from NASA LOLA data + the year simulation
 js/ui.js            small helpers (formatting, canvas sizing, colours)
 vendor/             third-party library committed to the repo (astronomy-engine, MIT)
 tests/              automated tests, run with `npm test`
-tools/              Node scripts (year simulation — milestone 3)
+tools/              Node scripts: build-terrain.mjs, simulate.mjs, browser-check.mjs
 ```
 
 ## Rules we follow

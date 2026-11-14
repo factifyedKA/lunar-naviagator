@@ -17,6 +17,7 @@ export default async function run({ session, base }) {
     await page.waitForTimeout(100);
     const name = await page.textContent('#site-name');
     check(/South Pole|Shackleton|Connecting/.test(name), `tapping map centre selects a polar site (got ${name})`);
+    await page.waitForFunction(() => document.querySelector('#site-terrain').textContent.length > 0, null, { timeout: 5000 }).catch(() => {});
     // zoom in twice, out once
     await page.click('#zoom-in'); await page.click('#zoom-in');
     check(await page.isDisabled('#zoom-in'), 'zoom-in disabled at max');
@@ -40,6 +41,7 @@ export default async function run({ session, base }) {
     await page.waitForSelector('.site-btn');
     check((await page.textContent('#site-coords')).includes('86.50°S'), 'state restored from URL');
     if (await page.locator('#play').count()) await skySteps(page, shot, check);
+    if (await page.locator('#tl-chart').count()) await timelineSteps(page, shot, check);
     // about tab
     await page.click('.tab[data-view="about"]');
     check(await page.isVisible('#view-about'), 'about view opens');
@@ -89,12 +91,56 @@ async function skySteps(page, shot, check) {
   await page.fill('#time-input', '2026-03-03T11:34');
   await page.locator('#time-input').dispatchEvent('change');
   await page.waitForTimeout(150);
+  check((await page.textContent('#sun-chip')).includes('Eclipse'), 'eclipse of 3 March 2026 is reported');
+  await page.locator('#sky').scrollIntoViewIfNeeded();
+  await shot('4-sky-eclipse-terrain');
+  await page.click('#hm-flat');
   await page.locator('#hz').fill('2');
   await page.waitForTimeout(150);
-  await page.locator('#sky').scrollIntoViewIfNeeded();
-  await shot('4-sky-eclipse-day');
+  check((await page.textContent('#hm-note')).includes('flat'), 'flat mode is labelled');
   await page.locator('#hz').fill('0');
+  await page.click('#hm-terrain');
+  check((await page.textContent('#site-terrain')).includes('Terrain viewpoint'), 'terrain viewpoint is shown');
   await page.click('#now-btn');
   await page.waitForTimeout(200);
   await shot('5-sky-now');
+}
+
+// Milestone 3: timeline, scores, ranking
+async function timelineSteps(page, shot, check) {
+  await page.click('.site-btn[data-site="ridge"]');
+  await page.click('.tab[data-view="timeline"]');
+  await page.waitForFunction(() => document.querySelector('#tl-score').textContent !== '–', null, { timeout: 15000 });
+  check(await page.locator('#tl-tiles .tile').count() === 5, 'five score tiles');
+  check(await page.locator('#rank-table tbody tr').count() === 13, 'ranking lists 13 sites');
+  const score1 = await page.textContent('#tl-score');
+  await page.locator('#w-earth').fill('0');
+  await page.locator('#w-outage').fill('0');
+  await page.waitForTimeout(150);
+  const score2 = await page.textContent('#tl-score');
+  check(score1 !== score2, `weights change the score (${score1} -> ${score2})`);
+  await shot('6-timeline');
+  await page.click('#tl-reset');
+  await page.selectOption('#tl-days', '365');
+  await page.waitForFunction(() => document.querySelector('#tl-caption').textContent.includes('365 days'), null, { timeout: 15000 });
+  await page.waitForTimeout(600);
+  await page.locator('#tl-chart').scrollIntoViewIfNeeded();
+  const box = await page.locator('#tl-chart').boundingBox();
+  await page.mouse.click(box.x + box.width * 0.5, box.y + 60);
+  await page.waitForTimeout(150);
+  check(/Sun [+−]/.test(await page.textContent('#tl-cursor')), 'tapping the chart shows values');
+  await page.locator('#emin').fill('3');
+  await page.waitForTimeout(800);
+  await page.locator('#tl-chart').scrollIntoViewIfNeeded();
+  await shot('7-timeline-year');
+  await page.locator('#emin').fill('0');
+  await page.waitForTimeout(800);
+  await page.click('#tl-goto');
+  check(await page.isVisible('#view-explore'), '"show this moment" returns to Explore');
+  // custom point gets a real-terrain horizon from the worker
+  await page.click('.site-btn[data-site="custom"]');
+  await page.waitForFunction(() => document.querySelector('#hm-note').textContent.includes('960 m'), null, { timeout: 20000 })
+    .catch(() => check(false, 'custom point terrain horizon arrives'));
+  await page.locator('#sky').scrollIntoViewIfNeeded();
+  await shot('8-custom-terrain');
 }

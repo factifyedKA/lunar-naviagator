@@ -4,6 +4,7 @@
 // so the vertical scale is stretched to make small angles easy to see.
 
 import { COLORS, fitCanvas, fmtSigned } from './ui.js';
+import { maskAt } from './terrain.js';
 
 const PAD = { left: 46, right: 12, top: 12, bottom: 34 };
 const COMPASS_8 = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
@@ -12,7 +13,8 @@ const COMPASS_8 = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
  * createSky(canvas) -> { draw(model) }
  * model = {
  *   lat,                 site latitude (sets the vertical range)
- *   hz,                  local horizon height in degrees
+ *   hz,                  local horizon height in degrees (flat horizon)
+ *   mask,                360 terrain-horizon elevations (real terrain) or null for flat
  *   centerAz,            azimuth shown in the middle of the panorama
  *   sun, earth,          { el, az, radius } now
  *   trail: { sun: [[az, el], ...], earth: [...] }   hourly positions over the slider window
@@ -25,7 +27,10 @@ export function createSky(canvas) {
     const plotW = w - PAD.left - PAD.right;
     const plotH = h - PAD.top - PAD.bottom;
     // vertical range: enough for the Earth's highest possible position at this latitude
-    const elMax = Math.ceil(90 - Math.abs(m.lat) + 9);
+    // (and for the terrain silhouette, up to a sensible limit)
+    let elMax = Math.ceil(90 - Math.abs(m.lat) + 9);
+    if (m.mask) elMax = Math.max(elMax, Math.ceil(Math.min(24, Math.max(...m.mask) + 2)));
+    const horizonAt = (az) => (m.mask ? maskAt(m.mask, az) : m.hz);
     const elMin = -elMax;
     const X = (az) => PAD.left + ((((az - m.centerAz + 540) % 360) + 360) % 360) / 360 * plotW;
     const Y = (el) => PAD.top + ((elMax - el) / (elMax - elMin)) * plotH;
@@ -60,22 +65,34 @@ export function createSky(canvas) {
     drawTrail(ctx, m.trail.earth, X, Y, plotW, COLORS.earth);
 
     // ground: everything below the local horizon (semi-transparent so hidden bodies show faintly)
-    const yh = Y(m.hz);
-    const ground = ctx.createLinearGradient(0, yh, 0, PAD.top + plotH);
-    ground.addColorStop(0, 'rgba(112,118,132,0.80)');
-    ground.addColorStop(1, 'rgba(58,62,74,0.86)');
+    const base = PAD.top + plotH;
+    const ground = ctx.createLinearGradient(0, Y(Math.min(elMax, 6)), 0, base);
+    ground.addColorStop(0, 'rgba(128,134,148,0.84)');
+    ground.addColorStop(1, 'rgba(58,62,74,0.88)');
+    ctx.beginPath();
+    ctx.moveTo(PAD.left, base);
+    for (let px = 0; px <= plotW; px += 2) {
+      ctx.lineTo(PAD.left + px, Y(horizonAt(m.centerAz - 180 + (px / plotW) * 360)));
+    }
+    ctx.lineTo(PAD.left + plotW, base);
+    ctx.closePath();
     ctx.fillStyle = ground;
-    ctx.fillRect(PAD.left, yh, plotW, PAD.top + plotH - yh);
+    ctx.fill();
+    ctx.beginPath();
+    for (let px = 0; px <= plotW; px += 2) {
+      const y = Y(horizonAt(m.centerAz - 180 + (px / plotW) * 360));
+      if (px === 0) ctx.moveTo(PAD.left, y); else ctx.lineTo(PAD.left + px, y);
+    }
     ctx.strokeStyle = '#E8EEF8';
     ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(PAD.left, yh); ctx.lineTo(PAD.left + plotW, yh); ctx.stroke();
+    ctx.stroke();
     ctx.font = '12px system-ui, sans-serif';
-    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-    ctx.fillStyle = 'rgba(232,238,248,0.85)';
-    ctx.fillText(m.hz === 0 ? 'Ground (flat horizon)' : `Ground (local horizon ${fmtSigned(m.hz)})`, PAD.left + 8, yh + 6);
-    if (m.hz !== 0) { // show where the ideal 0° horizon is
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillStyle = 'rgba(232,238,248,0.9)';
+    ctx.fillText(m.mask ? 'Ground — real terrain skyline (NASA LOLA)' : m.hz === 0 ? 'Ground (flat horizon)' : `Ground (flat horizon raised to ${fmtSigned(m.hz)})`, PAD.left + 8, base - 6);
+    if (m.mask || m.hz !== 0) { // show where the ideal 0° horizon is
       ctx.setLineDash([6, 6]);
-      ctx.strokeStyle = 'rgba(232,238,248,0.6)';
+      ctx.strokeStyle = 'rgba(232,238,248,0.5)';
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(PAD.left, Y(0)); ctx.lineTo(PAD.left + plotW, Y(0)); ctx.stroke();
       ctx.setLineDash([]);
@@ -83,8 +100,8 @@ export function createSky(canvas) {
 
     // the Sun, then the Earth on top (during an eclipse the Earth really is in front).
     // Labels go on opposite sides so they never cover each other.
-    body(ctx, X(m.sun.az), Y(m.sun.el), Math.max(5, m.sun.radius * pxPerDeg), m.sun.el - m.hz, 'Sun', COLORS.sun, PAD.left, plotW, true);
-    body(ctx, X(m.earth.az), Y(m.earth.el), Math.max(7, m.earth.radius * pxPerDeg), m.earth.el - m.hz, 'Earth', COLORS.earth, PAD.left, plotW, false);
+    body(ctx, X(m.sun.az), Y(m.sun.el), Math.max(5, m.sun.radius * pxPerDeg), m.sun.el - horizonAt(m.sun.az), 'Sun', COLORS.sun, PAD.left, plotW, true);
+    body(ctx, X(m.earth.az), Y(m.earth.el), Math.max(7, m.earth.radius * pxPerDeg), m.earth.el - horizonAt(m.earth.az), 'Earth', COLORS.earth, PAD.left, plotW, false);
     ctx.restore();
 
     // axes labels

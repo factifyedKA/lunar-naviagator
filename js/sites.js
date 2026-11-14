@@ -1,6 +1,8 @@
 // Landing-site data. Pure data: used by the browser app, the tests and the simulation.
 // Longitudes are degrees east (negative = west). See DECISIONS.md for how sure we are
 // of every coordinate. "approx: true" shows an "approximate" badge in the app.
+// snapKm: for terrain work the observer is put on the highest ground within this many km
+// of the marker (5 km inside the ~15 km Artemis regions, 1 km for the LOLA study points).
 
 export const GROUPS = [
   { id: 'artemis2024', title: 'Artemis III candidate regions', note: 'NASA, October 2024 list' },
@@ -8,32 +10,32 @@ export const GROUPS = [
 ];
 
 export const SITES = [
-  { id: 'cabeus-b', name: 'Peak near Cabeus B', lat: -84.3, lon: -62.0, group: 'artemis2024', approx: true,
+  { id: 'cabeus-b', name: 'Peak near Cabeus B', lat: -83.6, lon: -68.6, group: 'artemis2024', approx: true, snapKm: 5,
     blurb: 'A peak near the crater Cabeus B, on the Earth-facing side of the pole.' },
-  { id: 'haworth', name: 'Haworth', lat: -86.8, lon: -22.0, group: 'artemis2024', approx: true,
+  { id: 'haworth', name: 'Haworth', lat: -86.8, lon: -22.0, group: 'artemis2024', approx: true, snapKm: 5,
     blurb: 'High ground beside Haworth crater, whose floor never sees the Sun.' },
-  { id: 'malapert', name: 'Malapert Massif', lat: -85.96, lon: -2.3, group: 'artemis2024', approx: true,
+  { id: 'malapert', name: 'Malapert Massif', lat: -85.96, lon: -2.3, group: 'artemis2024', approx: true, snapKm: 5,
     blurb: 'A tall mountain on the Earth-facing side of the pole.' },
-  { id: 'mouton-plateau', name: 'Mons Mouton Plateau', lat: -84.2, lon: 28.0, group: 'artemis2024', approx: true,
+  { id: 'mouton-plateau', name: 'Mons Mouton Plateau', lat: -84.2, lon: 28.0, group: 'artemis2024', approx: true, snapKm: 5,
     blurb: 'Part of the broad, flat-topped mountain Mons Mouton.' },
-  { id: 'mouton', name: 'Mons Mouton', lat: -85.4, lon: 31.7, group: 'artemis2024', approx: true,
+  { id: 'mouton', name: 'Mons Mouton', lat: -85.4, lon: 31.7, group: 'artemis2024', approx: true, snapKm: 5,
     blurb: 'A wide, flat-topped mountain; once the planned landing area of NASA’s VIPER rover.' },
-  { id: 'nobile-1', name: 'Nobile Rim 1', lat: -85.4, lon: 38.5, group: 'artemis2024', approx: true,
+  { id: 'nobile-1', name: 'Nobile Rim 1', lat: -85.4, lon: 38.5, group: 'artemis2024', approx: true, snapKm: 5,
     blurb: 'On the western rim of Nobile crater.' },
-  { id: 'nobile-2', name: 'Nobile Rim 2', lat: -84.0, lon: 58.7, group: 'artemis2024', approx: true,
+  { id: 'nobile-2', name: 'Nobile Rim 2', lat: -84.0, lon: 58.7, group: 'artemis2024', approx: true, snapKm: 5,
     blurb: 'On the north-eastern rim of Nobile crater.' },
-  { id: 'gerlache-2', name: 'de Gerlache Rim 2', lat: -88.2, lon: -64.0, group: 'artemis2024', approx: true,
+  { id: 'gerlache-2', name: 'de Gerlache Rim 2', lat: -88.2, lon: -64.0, group: 'artemis2024', approx: true, snapKm: 5,
     blurb: 'Near the rim of de Gerlache crater, close to the pole.' },
-  { id: 'slater', name: 'Slater Plain', lat: -87.5, lon: 113.0, group: 'artemis2024', approx: true,
+  { id: 'slater', name: 'Slater Plain', lat: -87.5, lon: 113.0, group: 'artemis2024', approx: true, snapKm: 5,
     blurb: 'A plain next to Slater crater, on the far side of the pole from Earth.' },
 
-  { id: 'ridge', name: 'Connecting Ridge', lat: -89.45, lon: -137.31, group: 'reference', approx: true,
+  { id: 'ridge', name: 'Connecting Ridge', lat: -89.45, lon: -137.31, group: 'reference', approx: true, snapKm: 1,
     blurb: 'The ridge linking Shackleton and de Gerlache craters; one of the best-lit places near the pole.' },
-  { id: 'shackleton-peak', name: 'Peak near Shackleton', lat: -88.8, lon: 123.64, group: 'reference', approx: true,
+  { id: 'shackleton-peak', name: 'Peak near Shackleton', lat: -88.8, lon: 123.64, group: 'reference', approx: true, snapKm: 1,
     blurb: 'A high point a short distance from Shackleton crater.' },
-  { id: 'shackleton-rim', name: 'Shackleton Rim', lat: -89.78, lon: -155.73, group: 'reference', approx: true,
+  { id: 'shackleton-rim', name: 'Shackleton Rim', lat: -89.78, lon: -155.73, group: 'reference', approx: true, snapKm: 1,
     blurb: 'On the rim of Shackleton crater, which sits almost exactly at the pole.' },
-  { id: 'pole', name: 'South Pole', lat: -90, lon: 0, group: 'reference', approx: false,
+  { id: 'pole', name: 'South Pole', lat: -90, lon: 0, group: 'reference', approx: false, snapKm: 0,
     blurb: 'The exact geographic south pole of the Moon, for reference.' },
 ];
 SITES.forEach((s, i) => { s.n = i + 1; }); // the number shown on the map and in the list
