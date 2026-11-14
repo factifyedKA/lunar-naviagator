@@ -2,7 +2,7 @@
 // Strategy: NETWORK FIRST. Whenever the device is online the newest files are fetched (and
 // saved); the saved copies are used only when the network is unavailable. This way a new
 // version of the site is never hidden by an old cache.
-const CACHE = 'llsn-offline-v1';
+const CACHE = 'llsn-offline-v3';
 const FILES = [
   "./",
   "index.html",
@@ -26,6 +26,7 @@ const FILES = [
   "js/map.js",
   "js/metrics.js",
   "js/model.js",
+  "js/moon3d.js",
   "js/scenarios.js",
   "js/sites.js",
   "js/state.js",
@@ -36,9 +37,11 @@ const FILES = [
   "js/validation-view.js",
   "js/worker.js",
   "vendor/astronomy.js",
+  "vendor/three.module.min.js",
   "data/dem_75s_960m.bin",
   "data/horizons.json",
   "data/relief_80s.png",
+  "data/relief_global.png",
   "data/terrain.json",
   "data/validation-horizons.json",
   "data/validation-nasa-illumination.json",

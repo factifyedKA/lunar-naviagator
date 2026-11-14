@@ -73,7 +73,7 @@ export function decodeState(text, now = Date.now()) {
   const s = defaultState(now);
   const p = new URLSearchParams(String(text || '').replace(/^#/, ''));
   const view = p.get('v');
-  if (view && /^[a-z]+$/.test(view)) s.view = view;
+  if (view && /^[a-z0-9]+$/.test(view)) s.view = view;
   if (p.get('m') === 'x') s.mode = 'expert';
   const site = p.get('s');
   if (site === CUSTOM_ID || SITES.some((x) => x.id === site)) s.site = site;

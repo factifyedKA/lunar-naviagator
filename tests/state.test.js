@@ -67,3 +67,9 @@ test('offline support: the service worker lists every file the app needs', () =>
   for (const f of need) assert.ok(listed.includes(f), `${f} is missing from sw.js`);
   assert.ok(sw.includes('fetch(req).then'), 'network-first strategy');
 });
+
+test('state: every tab name survives a share link (including names with digits)', () => {
+  for (const view of ['explore', 'timeline', 'compare', 'finder', 'moon3d', 'learn', 'validation', 'about', 'brief', 'worksheet']) {
+    assert.equal(decodeState(encodeState({ ...defaultState(), view })).view, view);
+  }
+});

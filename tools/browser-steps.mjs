@@ -16,7 +16,7 @@ export default async function run({ session, base }) {
       const t1 = await page.textContent('#now-time');
       await page.waitForTimeout(1500);
       check(await page.locator('#intro-note.on').count() === 1 && t1 !== await page.textContent('#now-time'), 'intro time-lapse plays on a first visit');
-      check(await page.locator('.tab:visible').count() === 7, 'all seven tabs are visible in Simple mode, including Compare and Validation');
+      check(await page.locator('.tab:visible').count() >= 7 && await page.isVisible('.tab[data-view="compare"]') && await page.isVisible('.tab[data-view="validation"]'), 'all tabs are visible in Simple mode, including Compare and Validation');
       check(await page.locator('.site-btn:visible').count() === 13, 'site list shows all 13 sites, the same as the map and the ranking');
       await page.click('#welcome-go');
       await page.waitForFunction(() => document.querySelector('#welcome').hidden, null, { timeout: 3000 }).catch(() => {});
@@ -68,6 +68,7 @@ export default async function run({ session, base }) {
     if (await page.locator('#cmp-table').count()) await planSteps(page, shot, check);
     if (await page.locator('#learn-show').count()) await learnSteps(page, shot, check);
     if (await page.locator('#scenario-cards').count()) await impactSteps(page, shot, check);
+    if (await page.locator('#moon3d').count()) await moon3dSteps(page, shot, check);
     if (await page.locator('#val-list').count()) {
       await page.click('.tab[data-view="validation"]');
       await page.waitForFunction(() => /checks passed/.test(document.querySelector('#val-summary').textContent)
@@ -326,4 +327,51 @@ async function impactSteps(page, shot, check) {
   check(/most Earth contact — .*most sunlight — /.test(await page.textContent('#ws-key-2')), "teacher's key is filled from the year simulation");
   await shot('17-worksheet');
   await page.click('#ws-back');
+}
+
+// Step 4 of the enhancement round: 3D Moon
+async function moon3dSteps(page, shot, check) {
+  const before = await page.evaluate(() => performance.getEntriesByType('resource').some((r) => r.name.includes('three.module')));
+  check(!before, 'Three.js is not loaded until the 3D tab is opened');
+  await page.click('.tab[data-view="moon3d"]');
+  await page.waitForFunction(() => !document.querySelector('#m3-loading') || document.querySelector('#m3-loading').hidden, null, { timeout: 30000 }).catch(() => {});
+  if (await page.isVisible('#m3-fallback')) { check(false, '3D view started (WebGL fallback message shown instead)'); return; }
+  await page.waitForFunction(() => document.querySelectorAll('.pin3d:not([hidden])').length >= 13, null, { timeout: 15000 }).catch(() => {});
+  check(await page.locator('.pin3d:not([hidden])').count() >= 13, 'all site pins are visible with the south pole facing the viewer');
+  await page.waitForTimeout(1500); // textures
+  await shot('18-moon3d');
+  check(Number(await page.getAttribute('#moon3d', 'data-frames')) > 0, 'the 3D scene is drawn');
+  check(await page.isVisible('.tag3d.earth') && await page.isVisible('.tag3d.sun'), 'Earth and Sun markers are labelled and in view');
+  const where = () => page.evaluate(() => [...document.querySelectorAll('.pin3d')].map((p) => (p.hidden ? 'hidden' : p.style.transform)).join('|'));
+  const p0 = await where();
+  const box = await page.locator('#moon3d').boundingBox();
+  await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.2); // start away from the pins
+  await page.mouse.down(); await page.mouse.move(box.x + box.width * 0.2 + 120, box.y + box.height * 0.2 + 40, { steps: 5 }); await page.mouse.up();
+  await page.waitForTimeout(200);
+  check(p0 !== await where(), 'dragging turns the Moon');
+  await page.locator('#moon3d').focus();
+  const p1 = await where();
+  check(!p1.split('|').every((x) => x === 'hidden'), 'a normal drag keeps the pole in view');
+  await page.keyboard.press('ArrowLeft'); await page.waitForTimeout(150);
+  check(p1 !== await where(), 'arrow keys turn the Moon');
+  await page.click('#m3-pole');
+  await page.waitForTimeout(300);
+  check(await page.locator('.m3-pins.near').count() === 1, 'focus on south pole zooms in and shows names');
+  await shot('19-moon3d-pole');
+  await page.locator('.pin3d', { hasText: 'Nobile Rim 2' }).click();
+  await page.waitForTimeout(200);
+  check((await page.textContent('#m3-text')).includes('Nobile Rim 2'), 'tapping a pin selects that site');
+  const t1 = await page.textContent('#m3-time');
+  await page.click('#m3-play'); await page.waitForTimeout(900); await page.click('#m3-play');
+  check(t1 !== await page.textContent('#m3-time'), 'Play drives the 3D Moon');
+  await page.click('#m3-reset');
+  await page.waitForTimeout(200);
+  check(await page.locator('.m3-pins.near').count() === 0, 'reset view zooms back out');
+  // a shared link straight to the 3D tab must open it
+  await page.waitForTimeout(600);
+  const link = page.url();
+  check(link.includes('v=moon3d'), 'the 3D tab is kept in the share link');
+  await page.goto('about:blank'); await page.goto(link);
+  await page.waitForFunction(() => document.querySelectorAll('.pin3d:not([hidden])').length >= 13, null, { timeout: 30000 }).catch(() => {});
+  check(await page.isVisible('#view-moon3d') && await page.locator('.pin3d:not([hidden])').count() >= 13, 'a direct link opens the 3D Moon');
 }

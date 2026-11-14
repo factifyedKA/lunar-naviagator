@@ -24,6 +24,7 @@ const VIEWS = [
   { id: 'timeline', label: 'Timeline & scores' },
   { id: 'compare', label: 'Compare' },
   { id: 'finder', label: 'Best window' },
+  { id: 'moon3d', label: '3D Moon' },
   { id: 'learn', label: 'Learn' },
   { id: 'validation', label: 'Validation' },
   { id: 'about', label: 'About' },
@@ -243,6 +244,42 @@ function renderWorksheet() {
     + `most sunlight — ${sun.s.name} (${sun.v.toFixed(0)}%).`;
 }
 
+// ---------- 3D Moon tab: loaded lazily so the other tabs stay fast ----------
+let moon3d = null;
+let moon3dStatus = 'idle'; // idle -> loading -> ready | failed
+function renderMoon3d(s, site) {
+  if (moon3dStatus === 'idle') {
+    moon3dStatus = 'loading';
+    const fail = () => { moon3dStatus = 'failed'; moon3d = null; requestRender(); };
+    import('./moon3d.js').then((m) => {
+      try {
+        $('#m3-wrap').hidden = false; // the canvas needs a size before the renderer starts
+        moon3d = m.createMoon3d({ canvas: $('#moon3d'), pins: $('#m3-pins'), onSelect: (id) => setState({ site: id }), onLost: fail });
+        moon3dStatus = 'ready';
+        requestRender();
+      } catch { fail(); }
+    }, fail);
+  }
+  $('#m3-loading').hidden = moon3dStatus !== 'loading';
+  $('#m3-fallback').hidden = moon3dStatus !== 'failed';
+  $('#m3-wrap').hidden = moon3dStatus !== 'ready';
+  $('#m3-time').textContent = fmtDateTime(s.t);
+  $('#m3-play').textContent = s.playing ? '❚❚ Pause' : '▶ Play';
+  $('#m3-play').setAttribute('aria-pressed', String(s.playing));
+  $('#m3-slider').value = String(Math.round((s.t - s.t0) / HOUR));
+  $('#m3-slider').setAttribute('aria-valuetext', fmtDateTime(s.t));
+  if (moon3dStatus === 'ready') moon3d.update({ t: s.t, site: s.site, custom: hasCustom ? { lat: s.lat, lon: s.lon } : null });
+  if (!s.playing) { // text alternative, also shown when WebGL is unavailable
+    const frame = moonFrame(s.t);
+    const sun = subSolarPoint(frame);
+    const earth = subEarthPoint(frame);
+    const text = `At ${fmtDateTime(s.t)} the Sun is overhead at ${fmtLat(sun.lat)}, ${fmtLon(sun.lon)} and lights that half of the Moon; `
+      + `the Earth is overhead at ${fmtLat(earth.lat)}, ${fmtLon(earth.lon)}. Selected site: ${site.name} (${fmtLat(site.lat)}, ${fmtLon(site.lon)}).`;
+    $('#m3-text').textContent = text;
+    $('#moon3d').setAttribute('aria-label', `3D Moon. ${text}`);
+  }
+}
+
 // ---------- drawing ----------
 function requestRender() {
   if (frameRequested) return;
@@ -334,6 +371,7 @@ function render() {
   if (view === 'learn') { renderLearnView(); return; }
   if (view === 'validation') { renderValidationView(); return; }
   if (view === 'brief') { renderBrief(); return; }
+  if (view === 'moon3d') { renderMoon3d(s, site); return; }
   if (view === 'worksheet') { renderWorksheet(); return; }
   if (view !== 'explore') return;
 
@@ -437,6 +475,12 @@ async function start() {
   initGlossaryTooltips();
   initScenarios(requestRender);
   initBrief(requestRender);
+  $('#m3-play').addEventListener('click', () => setPlaying(!getState().playing));
+  $('#m3-now').addEventListener('click', () => setState({ t: Math.round(Date.now() / MINUTE) * MINUTE, playing: false }));
+  $('#m3-slider').addEventListener('input', (ev) => setState({ t: getState().t0 + Number(ev.target.value) * HOUR, playing: false }));
+  $('#m3-reset').addEventListener('click', () => moon3d && moon3d.reset());
+  $('#m3-pole').addEventListener('click', () => moon3d && moon3d.focusPole());
+  if ('ResizeObserver' in window) new ResizeObserver(() => moon3d && moon3d.resize()).observe($('#m3-wrap'));
   $('#tl-brief').addEventListener('click', () => openBrief('site'));
   $('#cmp-brief').addEventListener('click', () => openBrief('cmp'));
   $('#open-worksheet').addEventListener('click', () => setState({ view: 'worksheet' }));

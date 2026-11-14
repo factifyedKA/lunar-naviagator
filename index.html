@@ -384,6 +384,43 @@
         </div>
       </section>
 
+      <!-- 3D MOON VIEW (its code and textures load only when this tab is opened) -->
+      <section class="view" id="view-moon3d" aria-labelledby="m3-title" hidden>
+        <h2 class="visually-hidden" id="m3-title">3D Moon</h2>
+        <details class="hint">
+          <summary>What am I looking at?</summary>
+          <p>A globe of the Moon you can turn with your finger. You start looking straight at the <strong>south pole</strong>.
+            The bright side faces the Sun; the blue ball shows the direction of the Earth. Numbered pins are the landing
+            sites. <strong>Drag</strong> to turn, <strong>pinch</strong> to zoom, <strong>double-tap</strong> to reset.</p>
+        </details>
+        <div class="card">
+          <div class="card-head">
+            <h3>3D Moon · <span id="m3-time"></span></h3>
+            <div class="zoom">
+              <button type="button" class="btn small" id="m3-pole">Focus on south pole</button>
+              <button type="button" class="btn small" id="m3-reset">Reset view</button>
+            </div>
+          </div>
+          <p class="busy-line" id="m3-loading" role="status">Loading the 3D Moon…</p>
+          <p class="m3-fallback" id="m3-fallback" hidden>The 3D view could not start on this device (it needs WebGL graphics).
+            Everything else works: use the <strong>Explore</strong> tab for the map and the horizon view.</p>
+          <div class="m3-wrap" id="m3-wrap" hidden>
+            <canvas id="moon3d" tabindex="0" role="img" aria-label="3D Moon"></canvas>
+            <div class="m3-pins" id="m3-pins"></div>
+          </div>
+          <div class="timebar m3-bar">
+            <button type="button" class="btn primary" id="m3-play" aria-pressed="false">▶ Play</button>
+            <button type="button" class="btn" id="m3-now">Now</button>
+          </div>
+          <input type="range" id="m3-slider" min="0" max="720" step="1" value="0" aria-label="Time within the 30-day window, in hours">
+          <p id="m3-text" class="cursor-line"></p>
+          <p class="caption">Surface: shaded relief made from NASA LRO/LOLA elevation data (whole Moon at 4 pixels per degree; south polar
+            cap from the 240 m model), with artificial lighting baked in. The moving day and night is for a smooth ball and the night
+            side is brightened so you can see it. The Earth (blue) and Sun (yellow) balls show true directions only; their sizes and
+            distances are not to scale. Site positions are approximate. Keyboard: arrow keys turn, + and − zoom, Home resets, P focuses on the pole.</p>
+        </div>
+      </section>
+
       <!-- LEARN VIEW -->
       <section class="view" id="view-learn" aria-labelledby="learn-heading" hidden>
         <h2 class="visually-hidden" id="learn-heading">Learn</h2>

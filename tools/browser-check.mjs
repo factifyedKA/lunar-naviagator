@@ -24,7 +24,8 @@ const problems = [];
 const browser = await chromium.launch();
 async function session(name, viewport, steps) {
   const page = await browser.newPage({ viewport, deviceScaleFactor: 1, hasTouch: true });
-  page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') problems.push(`[${name}] console ${m.type()}: ${m.text()}`); });
+  // ("GL Driver Message" lines come from the headless test browser's software graphics when a screenshot is taken, not from the app)
+  page.on('console', (m) => { if ((m.type() === 'error' || m.type() === 'warning') && !m.text().includes('GL Driver Message')) problems.push(`[${name}] console ${m.type()}: ${m.text()}`); });
   page.on('pageerror', (e) => problems.push(`[${name}] page error: ${e.message}`));
   page.on('requestfailed', (r) => problems.push(`[${name}] request failed: ${r.url()}`));
   page.on('response', (r) => { if (r.status() >= 400) problems.push(`[${name}] HTTP ${r.status()}: ${r.url()}`); });

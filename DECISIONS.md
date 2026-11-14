@@ -252,3 +252,26 @@ default) was cut down:
   (drawn by `tools/make-icons.mjs`) make the site installable from Share → Add to Home
   Screen. A test checks that every app file is on the offline list.
 - **Touch targets:** small buttons raised to 40 px, info buttons to 36 px.
+
+## 3D Moon tab
+- **Library:** Three.js r160 (MIT), single file `vendor/three.module.min.js`, loaded only
+  when the 3D tab is first opened (dynamic import) so other tabs stay fast.
+- **Surface texture is real NASA data, not illustrative:** `data/relief_global.png` is
+  shaded relief computed by `tools/build-global-relief.mjs` from the NASA LOLA global
+  elevation model `LDEM_4` (4 pixels per degree, about 7.6 km per pixel; slopes exaggerated
+  9x so relief is visible at that scale). South of 80°S the sharper 240 m polar relief is
+  blended in by the shader. Both carry artificial upper-left lighting, as labelled.
+- **Lighting:** the Sun is the light direction from the same ephemeris as everywhere else,
+  on a smooth sphere, with the night side kept at 30% so it stays visible (labelled).
+- **Earth and Sun balls** show true directions at 1.4 Moon radii; sizes and distances are
+  not to scale (labelled).
+- **Controls:** our own small orbit code (free rotation with no pole lock): drag, pinch,
+  wheel, double-tap reset, arrow keys, +/−, Home, P. Pins are real HTML buttons over the
+  canvas, so they are tappable and keyboard-accessible; a text line describes the scene.
+- **Fallback:** if WebGL cannot start or the graphics context is lost, a friendly message
+  points to the Explore tab; the text description still works.
+- **Bugs found while testing:** share links rejected tab names containing a digit
+  (`moon3d`) — fixed and tested; the first drag speed spun the pole out of sight — slowed
+  so the surface follows the finger.
+- **Not verified on a physical iPad:** pinch-zoom is implemented with standard pointer
+  events but could only be tested with mouse, wheel and keyboard in the headless browser.
