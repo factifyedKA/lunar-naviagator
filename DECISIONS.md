@@ -145,3 +145,13 @@ fallback was replaced by real terrain. Flat mode is kept as a clearly labelled o
 - **Network:** now reachable: ssd.jpl.nasa.gov, pgda.gsfc.nasa.gov,
   pds-geosciences.wustl.edu, planetarynames.wr.usgs.gov, www.nasa.gov. Still not
   reachable: the USGS data release with the official region grids.
+
+## Milestone 4 — compare and best-window finder
+- **Compare:** four slots (A–D), each a site plus its own start date, so the same site can
+  be compared on different dates. All slots share one length and the same horizon model,
+  Earth margin and score weights, so the comparison is fair. Best value per row gets a ★
+  (not colour alone).
+- **Best-window finder:** tries one mission start per day (00:00 UTC) across the search
+  period, scores each with the same composite score as everywhere else, and lists the ten
+  best. Windows of the same site in the list never overlap; different sites may share dates.
+  Mission length 1–60 days; search period 90, 180 or 365 days. Runs in the Web Worker.

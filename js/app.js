@@ -6,6 +6,8 @@ import { moonFrame, skyAt, subEarthPoint, subSolarPoint, meanEarthAzimuth } from
 import { visibility } from './metrics.js';
 import { data, loadData, siteModel, horizonNote } from './model.js';
 import { initTimelineView, renderTimelineView } from './timeline-view.js';
+import { initCompareView, renderCompareView } from './compare-view.js';
+import { initFinderView, renderFinderView } from './finder-view.js';
 import { createMap, ZOOMS } from './map.js';
 import { createSky } from './horizon.js';
 import { $, el, clamp, fmtLat, fmtLon, fmtSigned, fmtDateTime, fmtDate, compass } from './ui.js';
@@ -13,6 +15,8 @@ import { $, el, clamp, fmtLat, fmtLon, fmtSigned, fmtDateTime, fmtDate, compass 
 const VIEWS = [
   { id: 'explore', label: 'Explore' },
   { id: 'timeline', label: 'Timeline & scores' },
+  { id: 'compare', label: 'Compare' },
+  { id: 'finder', label: 'Best window' },
   { id: 'about', label: 'About' },
 ];
 const MINUTE = 60e3;
@@ -108,6 +112,7 @@ function wireControls() {
     const ro = new ResizeObserver(requestRender);
     ro.observe($('#map'));
     ro.observe($('#sky'));
+    ro.observe($('#main'));
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden) setPlaying(false); });
 }
@@ -234,6 +239,8 @@ function render() {
       + (site.snapKm ? ` — the highest ground within ${site.snapKm} km of the marker, plus a 2 m mast.` : ', plus a 2 m mast.');
 
   if (view === 'timeline') { renderTimelineView(); return; }
+  if (view === 'compare') { renderCompareView(); return; }
+  if (view === 'finder') { renderFinderView(); return; }
   if (view !== 'explore') return;
 
   // ---- the science: where are the Sun and the Earth right now? ----
@@ -315,6 +322,8 @@ async function start() {
   sky = createSky($('#sky'));
   wireControls();
   initTimelineView(requestRender);
+  initCompareView(requestRender);
+  initFinderView(requestRender);
   subscribe(requestRender);
   render();                                   // show the page at once…
   const ok = await loadData(requestRender);   // …then add terrain and pre-computed results

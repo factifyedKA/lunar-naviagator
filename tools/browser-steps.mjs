@@ -42,6 +42,7 @@ export default async function run({ session, base }) {
     check((await page.textContent('#site-coords')).includes('86.50°S'), 'state restored from URL');
     if (await page.locator('#play').count()) await skySteps(page, shot, check);
     if (await page.locator('#tl-chart').count()) await timelineSteps(page, shot, check);
+    if (await page.locator('#cmp-table').count()) await planSteps(page, shot, check);
     // about tab
     await page.click('.tab[data-view="about"]');
     check(await page.isVisible('#view-about'), 'about view opens');
@@ -143,4 +144,38 @@ async function timelineSteps(page, shot, check) {
     .catch(() => check(false, 'custom point terrain horizon arrives'));
   await page.locator('#sky').scrollIntoViewIfNeeded();
   await shot('8-custom-terrain');
+}
+
+// Milestone 4: compare and best-window finder
+async function planSteps(page, shot, check) {
+  await page.click('.site-btn[data-site="malapert"]');
+  await page.click('.tab[data-view="compare"]');
+  await page.waitForFunction(() => document.querySelectorAll('#cmp-table tbody tr').length === 6
+    && document.querySelectorAll('#cmp-table thead th').length === 4, null, { timeout: 15000 });
+  check(await page.locator('#cmp-charts canvas').count() === 3, 'three timelines by default');
+  check(await page.locator('#cmp-table td.best').count() >= 6, 'best values are starred');
+  // same site on another date in slot D
+  await page.selectOption('#cmp-site-3', 'malapert');
+  await page.fill('#cmp-date-3', '2027-06-01');
+  await page.locator('#cmp-date-3').dispatchEvent('change');
+  await page.waitForFunction(() => document.querySelectorAll('#cmp-table thead th').length === 5, null, { timeout: 15000 });
+  await page.waitForTimeout(700);
+  check(page.url().includes('cmp='), 'compare choice is saved in the link');
+  await shot('10-compare');
+  await page.selectOption('#cmp-site-1', '');
+  await page.waitForTimeout(300);
+  check(await page.locator('#cmp-charts canvas').count() === 3, 'emptying a slot removes its chart');
+
+  await page.click('.tab[data-view="finder"]');
+  await page.waitForFunction(() => document.querySelectorAll('#fw-table tbody tr').length === 10, null, { timeout: 20000 });
+  check(/Best 14-day window/.test(await page.textContent('#fw-answer')), 'finder gives a plain answer');
+  await page.click('[data-ml="30"]');
+  await page.waitForFunction(() => document.querySelector('#fw-answer').textContent.includes('30-day'), null, { timeout: 20000 });
+  await shot('11-finder');
+  await page.click('#fw-site');
+  await page.waitForFunction(() => document.querySelectorAll('#fw-table tbody tr').length < 10, null, { timeout: 20000 });
+  check(await page.locator('#fw-table tbody tr').count() >= 3, 'single-site search lists several windows');
+  await page.locator('#fw-table tbody tr button').first().click();
+  await page.waitForTimeout(400);
+  check(await page.isVisible('#view-timeline'), '"Open timeline" jumps to the timeline');
 }

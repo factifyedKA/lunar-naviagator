@@ -1,7 +1,7 @@
 // The heavy jobs themselves. They run inside the Web Worker (js/worker.js); if a browser
 // cannot start the worker, js/compute.js runs the very same code on the main thread.
 
-import { computeSeries } from './metrics.js';
+import { computeSeries, findWindows } from './metrics.js';
 import { makeDem, horizonMask } from './terrain.js';
 
 const COARSE = { url: new URL('../data/dem_75s_960m.bin', import.meta.url), size: 953, mpp: 960 };
@@ -24,6 +24,11 @@ export async function runJob(type, args) {
     const series = computeSeries(args.models, args.start, args.hours, args.emin);
     const transfer = series.flatMap((s) => [s.sunFrac.buffer, s.earthUp.buffer, s.sunH.buffer, s.earthH.buffer]);
     return { result: series, transfer };
+  }
+  if (type === 'windows') {
+    // best-window finder: score every daily mission start for several sites
+    const series = computeSeries(args.models, args.start, args.hours, args.emin);
+    return { result: series.map((s) => findWindows(s, args.missionHours, args.weights)), transfer: [] };
   }
   if (type === 'mask') {
     // terrain horizon for a custom point, from the coarse elevation grid

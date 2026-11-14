@@ -161,3 +161,55 @@ function dateTicks(startMs, spanDays) {
   }
   return ticks;
 }
+
+/**
+ * Small line chart: overall score (0..100) against mission start date.
+ * @param scores  one value per day from startMs
+ * @param marks   day indices to highlight with a dot
+ */
+export function drawScoreCurve(canvas, { scores, startMs, marks = [] }) {
+  const { ctx, w, h } = fitCanvas(canvas);
+  const plotW = w - PAD.left - PAD.right;
+  const top = PAD.top;
+  const ph = h - PAD.top - PAD.bottom;
+  const n = Math.max(2, scores.length);
+  const X = (i) => PAD.left + (i / (n - 1)) * plotW;
+  const Y = (v) => top + ((100 - v) / 100) * ph;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#0a0f1e';
+  ctx.fillRect(PAD.left, top, plotW, ph);
+  ctx.font = '12px system-ui, sans-serif';
+  ctx.lineWidth = 1;
+  for (let v = 0; v <= 100; v += 25) {
+    ctx.strokeStyle = COLORS.grid;
+    ctx.beginPath(); ctx.moveTo(PAD.left, Y(v)); ctx.lineTo(PAD.left + plotW, Y(v)); ctx.stroke();
+    ctx.fillStyle = COLORS.dim;
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(v), PAD.left - 6, Y(v));
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (const t of dateTicks(startMs, n - 1)) {
+    const x = PAD.left + ((t.ms - startMs) / ((n - 1) * DAY)) * plotW;
+    ctx.strokeStyle = COLORS.grid;
+    ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, top + ph); ctx.stroke();
+    ctx.fillStyle = COLORS.dim;
+    if (x > PAD.left + 16 && x < w - PAD.right - 16) ctx.fillText(t.label, x, top + ph + 8);
+  }
+  if (scores.length > 1) {
+    ctx.strokeStyle = '#8ab4ff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    scores.forEach((v, i) => { if (i === 0) ctx.moveTo(X(i), Y(v)); else ctx.lineTo(X(i), Y(v)); });
+    ctx.stroke();
+    for (const m of marks) {
+      if (m < 0 || m >= scores.length) continue;
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#0b0f1a';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(X(m), Y(scores[m]), 6, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+    }
+  }
+  ctx.strokeStyle = 'rgba(200,215,240,0.4)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(PAD.left + 0.5, top + 0.5, plotW - 1, ph - 1);
+}

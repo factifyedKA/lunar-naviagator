@@ -8,6 +8,7 @@ const HOUR = 3600e3;
 const DAY = 24 * HOUR;
 export const WINDOW_DAYS = 30; // length of the time-slider window
 export const RANGE_DAYS = [30, 60, 90, 180, 365]; // timeline lengths on offer
+export const FIND_DAYS = [90, 180, 365];           // best-window search spans on offer
 export { HOUR, DAY };
 
 export const startOfUtcDay = (ms) => Math.floor(ms / DAY) * DAY;
@@ -28,6 +29,10 @@ export function defaultState(now = Date.now()) {
     rs: startOfUtcDay(t),  // timeline range: start (ms, UTC midnight)
     rd: 90,                // timeline range: length in days
     w: DEFAULT_WEIGHTS.slice(), // weights of the five score parts (0..5 each)
+    cmp: null,             // compare slots: [{ id, start } | null] x 4 (null = app chooses a default)
+    ml: 14,                // best-window finder: mission length in days
+    sc: 'all',             // best-window finder: search "all" sites or the selected "site"
+    fd: 180,               // best-window finder: how many days ahead to search
     // not saved in the URL:
     playing: false,
     drop: false,           // "drop a pin" mode on the map
@@ -54,6 +59,10 @@ export function encodeState(s) {
   p.set('rs', new Date(s.rs).toISOString().slice(0, 10));
   if (s.rd !== 90) p.set('rd', String(s.rd));
   if (s.w.join() !== DEFAULT_WEIGHTS.join()) p.set('w', s.w.join(','));
+  if (s.cmp) p.set('cmp', s.cmp.map((c) => (c ? `${c.id}@${new Date(c.start).toISOString().slice(0, 10)}` : '-')).join(';'));
+  if (s.ml !== 14) p.set('ml', String(s.ml));
+  if (s.sc !== 'all') p.set('sc', s.sc);
+  if (s.fd !== 180) p.set('fd', String(s.fd));
   return p.toString().replace(/%3A/g, ':').replace(/%2C/g, ',');
 }
 
@@ -86,6 +95,18 @@ export function decodeState(text, now = Date.now()) {
   if (RANGE_DAYS.includes(Number(p.get('rd')))) s.rd = Number(p.get('rd'));
   const w = (p.get('w') || '').split(',').map(Number);
   if (w.length === DEFAULT_WEIGHTS.length && w.every((x) => Number.isInteger(x) && x >= 0 && x <= 5)) s.w = w;
+  const cmp = (p.get('cmp') || '').split(';');
+  if (cmp.length === 4) {
+    s.cmp = cmp.map((part) => {
+      const [id, date] = part.split('@');
+      const start = Date.parse(`${date}T00:00Z`);
+      const known = id === CUSTOM_ID || SITES.some((x) => x.id === id);
+      return known && Number.isFinite(start) && start > Date.UTC(1970, 0, 2) && start < Date.UTC(2099, 0, 1) ? { id, start } : null;
+    });
+  }
+  s.ml = Math.round(num(p.get('ml'), 1, 60, 14));
+  if (p.get('sc') === 'site') s.sc = 'site';
+  if (FIND_DAYS.includes(Number(p.get('fd')))) s.fd = Number(p.get('fd'));
   return s;
 }
 

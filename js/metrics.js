@@ -133,3 +133,40 @@ export function fmtDuration(hours) {
   if (d === 0) return `${h} h`;
   return h === 0 ? `${d} d` : `${d} d ${h} h`;
 }
+
+// ---- best-window finder -----------------------------------------------------------------
+/**
+ * Scores every possible mission start inside a series.
+ * @param series        from computeSeries() (hourly samples)
+ * @param missionHours  mission length
+ * @param weights       score weights
+ * @param stepHours     try a start every this many hours (default: once a day)
+ * @returns [{ start, score, summary }] — start is a sample index (hours from the series start)
+ */
+export function findWindows(series, missionHours, weights = DEFAULT_WEIGHTS, stepHours = 24) {
+  const n = series.sunFrac.length;
+  const out = [];
+  for (let start = 0; start + missionHours < n; start += stepHours) {
+    const summary = summarize(series, 1, start, missionHours);
+    out.push({ start, score: compositeScore(summary, weights).score, summary });
+  }
+  return out;
+}
+
+/**
+ * Picks the best windows that do not overlap each other (highest score first).
+ * @param windows  from findWindows(); each may carry extra fields (e.g. the site)
+ * @param count    how many to return
+ * @param missionHours  windows closer together than this (for the same key) are skipped
+ * @param keyOf    optional: windows with different keys (e.g. different sites) may overlap
+ */
+export function topWindows(windows, count, missionHours, keyOf = () => '') {
+  const sorted = windows.slice().sort((a, b) => b.score - a.score || a.start - b.start);
+  const picked = [];
+  for (const w of sorted) {
+    if (picked.some((p) => keyOf(p) === keyOf(w) && Math.abs(p.start - w.start) < missionHours)) continue;
+    picked.push(w);
+    if (picked.length >= count) break;
+  }
+  return picked;
+}

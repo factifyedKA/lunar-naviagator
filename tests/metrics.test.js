@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { makeDem, demPixel, demLatLon, demHeight, highestNear, horizonMask, maskAt } from '../js/terrain.js';
-import { computeSeries, summarize, compositeScore, visibility, fmtDuration, DEFAULT_WEIGHTS } from '../js/metrics.js';
+import { computeSeries, summarize, compositeScore, visibility, fmtDuration, findWindows, topWindows, DEFAULT_WEIGHTS } from '../js/metrics.js';
 import { skyAtTime } from '../js/astro.js';
 import { SITES } from '../js/sites.js';
 
@@ -127,4 +127,41 @@ test('data: year-sim.json matches a fresh calculation and known physics', () => 
   // on an ideal smooth sphere every polar site is sunlit about half the time
   for (const s of SITES) assert.ok(Math.abs(sim.sites[s.id].flat.sunlitPct - 50) < 4, s.id);
   assert.ok(compositeScore(sim.sites.malapert.terrain, DEFAULT_WEIGHTS).score > compositeScore(sim.sites.haworth.terrain, DEFAULT_WEIGHTS).score);
+});
+
+test('best-window finder: finds the sunny, Earth-visible stretch and never returns overlapping windows', () => {
+  // 40 days of hourly samples: dark and silent, except days 10-20 which are perfect
+  const n = 40 * 24 + 1;
+  const sunFrac = new Float32Array(n);
+  const earthUp = new Uint8Array(n);
+  for (let i = 10 * 24; i < 20 * 24; i++) { sunFrac[i] = 1; earthUp[i] = 1; }
+  const wins = findWindows({ sunFrac, earthUp }, 5 * 24);
+  assert.equal(wins.length, 36);                       // one start per day while the mission still fits
+  assert.equal(wins[0].start, 0);
+  const top = topWindows(wins, 3, 5 * 24);
+  assert.equal(top[0].score, 100);
+  assert.ok(top[0].start >= 10 * 24 && top[0].start <= 15 * 24);
+  assert.equal(top[1].score, 100);                     // a second, non-overlapping perfect window exists
+  for (let a = 0; a < top.length; a++) for (let b = a + 1; b < top.length; b++) {
+    assert.ok(Math.abs(top[a].start - top[b].start) >= 5 * 24, 'windows must not overlap');
+  }
+  assert.ok(top[2].score < 100);
+  // windows of different sites may share dates
+  const tagged = [...wins.map((w) => ({ ...w, site: 'a' })), ...wins.map((w) => ({ ...w, site: 'b' }))];
+  const both = topWindows(tagged, 4, 5 * 24, (w) => w.site);
+  assert.equal(both.filter((w) => w.score === 100).length, 4);
+  assert.deepEqual(findWindows({ sunFrac, earthUp }, 60 * 24), []); // mission longer than the search period
+});
+
+test('best-window finder on real data: the best 14 days at the Connecting Ridge beat the worst', () => {
+  const h = json('horizons.json').sites.ridge;
+  const [series] = computeSeries([{ lat: h.lat, lon: h.lon, heightKm: h.height / 1000, mask: h.mask }], Date.UTC(2027, 0, 1), 120 * 24, 0);
+  const wins = findWindows(series, 14 * 24, DEFAULT_WEIGHTS);
+  const scores = wins.map((w) => w.score);
+  const best = topWindows(wins, 1, 14 * 24)[0];
+  assert.equal(best.score, Math.max(...scores));
+  assert.ok(best.score - Math.min(...scores) > 5, 'start date matters');
+  // the window summary equals a direct summary of the same hours
+  const direct = summarize(series, 1, best.start, 14 * 24);
+  assert.deepEqual(best.summary, direct);
 });

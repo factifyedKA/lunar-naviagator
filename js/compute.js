@@ -46,3 +46,6 @@ function call(type, args) {
 export const seriesJob = (models, start, hours, emin) => call('series', { models, start, hours, emin });
 /** Terrain horizon mask for a custom point: { mask: Float32Array(360), height }. */
 export const maskJob = (lat, lon) => call('mask', { lat, lon });
+/** Best-window finder: for each model, [{ start, score, summary }] for every daily start. */
+export const windowsJob = (models, start, hours, emin, missionHours, weights) =>
+  call('windows', { models, start, hours, emin, missionHours, weights });
