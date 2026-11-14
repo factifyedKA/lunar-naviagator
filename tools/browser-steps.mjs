@@ -9,6 +9,14 @@ export default async function run({ session, base }) {
     check(await page.locator('.site-btn').count() === 13, '13 sites listed');
     await page.waitForTimeout(400);
     await shot('1-start');
+    if (await page.locator('#welcome').count()) {
+      check(await page.isVisible('#welcome'), 'welcome card greets a first-time visitor');
+      check(await page.locator('.tab:visible').count() === 5, 'Simple mode shows five tabs');
+      check(await page.locator('.site-btn:visible').count() === 9, 'Simple mode lists the nine Artemis regions');
+      await page.click('#welcome-go');
+      check(!(await page.isVisible('#welcome')), 'welcome card closes');
+      check(/right now/.test(await page.textContent('#now-verdict')), 'plain verdict line is shown');
+    }
     if (await page.locator('#mode-expert').count()) {
       check(!(await page.isVisible('#custom-form')), 'Simple mode hides expert controls');
       await page.click('#mode-expert');

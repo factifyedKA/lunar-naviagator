@@ -84,7 +84,22 @@
       <!-- EXPLORE VIEW -->
       <section class="view" id="view-explore" aria-labelledby="explore-title">
         <h2 class="visually-hidden" id="explore-title">Explore</h2>
-        <details class="hint" open>
+        <div class="card welcome" id="welcome" hidden>
+          <h3>Where should astronauts land on the Moon?</h3>
+          <p>A Moon lander needs <strong>sunlight</strong> to make electricity and a view of the
+            <strong>Earth</strong> to talk by radio. This tool shows which landing spots have them, and when.</p>
+          <ol class="steps">
+            <li><span class="step">1</span> Tap a numbered dot on the map</li>
+            <li><span class="step">2</span> Press <strong>Play</strong> to watch the Sun and the Earth move</li>
+            <li><span class="step">3</span> Read the answer: power? radio?</li>
+          </ol>
+          <div class="welcome-actions">
+            <button type="button" class="btn primary" id="welcome-go">Start exploring</button>
+            <button type="button" class="btn" id="welcome-best">Find the best place to land</button>
+            <button type="button" class="btn" id="welcome-learn">Take the short tour</button>
+          </div>
+        </div>
+        <details class="hint">
           <summary>What am I looking at?</summary>
           <p>You are looking <strong>down on the Moon's south pole</strong>. The side facing Earth is at the top.
             Each numbered dot is a place NASA is studying for an astronaut landing.
@@ -98,7 +113,7 @@
             <div class="card-head">
               <h3>South-pole site map</h3>
               <div class="zoom" role="group" aria-label="Map tools">
-                <button type="button" class="btn small" id="map-png">Save PNG</button>
+                <button type="button" class="btn small expert-only" id="map-png">Save PNG</button>
                 <button type="button" class="btn icon" id="zoom-out" aria-label="Zoom out">−</button>
                 <button type="button" class="btn icon" id="zoom-in" aria-label="Zoom in">+</button>
               </div>
@@ -113,7 +128,7 @@
             <div class="card site-card">
               <p class="eyebrow" id="site-group"></p>
               <h3 id="site-name"></h3>
-              <p class="coords-line" id="site-coords"></p>
+              <p class="coords-line expert-only" id="site-coords"></p>
               <p id="site-blurb"></p>
               <p class="badge-line" id="site-approx"></p>
               <p class="badge-line expert-only" id="site-terrain"></p>
@@ -121,6 +136,7 @@
 
             <div class="card now-card">
               <p class="eyebrow">The sky right now · <span id="now-time"></span></p>
+              <p class="verdict" id="now-verdict"></p>
               <div class="readout">
                 <span class="dot sun" aria-hidden="true"></span>
                 <div>
@@ -146,7 +162,7 @@
         <div class="card sky-card">
           <div class="card-head">
             <h3>Horizon view from <span id="sky-site"></span></h3>
-            <button type="button" class="btn small" id="sky-png">Save PNG</button>
+            <button type="button" class="btn small expert-only" id="sky-png">Save PNG</button>
           </div>
           <details class="hint small">
             <summary>What am I looking at?</summary>
@@ -160,14 +176,14 @@
             <canvas id="sky" role="img" aria-label="Horizon view"></canvas>
           </div>
           <div class="timebar">
-            <button type="button" class="btn" id="step-back" aria-label="Back one day">−1 day</button>
+            <button type="button" class="btn expert-only" id="step-back" aria-label="Back one day">−1 day</button>
             <button type="button" class="btn primary" id="play" aria-pressed="false">▶ Play</button>
-            <button type="button" class="btn" id="step-fwd" aria-label="Forward one day">+1 day</button>
-            <div class="seg" role="group" aria-label="Time-lapse speed">
+            <button type="button" class="btn expert-only" id="step-fwd" aria-label="Forward one day">+1 day</button>
+            <div class="seg expert-only" role="group" aria-label="Time-lapse speed">
               <button type="button" class="btn" id="speed-hour" aria-pressed="true">1 hour / sec</button>
               <button type="button" class="btn" id="speed-day" aria-pressed="false">1 day / sec</button>
             </div>
-            <label class="field time-field">Date and time (UTC)
+            <label class="field time-field expert-only">Date and time (UTC)
               <input type="datetime-local" id="time-input" min="1970-01-02T00:00" max="2099-12-31T00:00">
             </label>
             <button type="button" class="btn" id="now-btn">Now</button>
@@ -229,7 +245,8 @@
               <p id="tl-score-text"></p>
             </div>
           </div>
-          <details class="why" open>
+          <p class="note simple-only">Want to see exactly how this score is worked out, or change what matters most? Tap <strong>Expert</strong> at the top of the page.</p>
+          <details class="why expert-only" open>
             <summary>Why this score?</summary>
             <div class="table-wrap">
               <table id="tl-why">
@@ -239,9 +256,11 @@
             </div>
             <p class="caption" id="tl-why-note"></p>
           </details>
+          <div class="expert-only">
           <h4>What matters most for your mission? <span class="note-inline">(0 = ignore, 5 = very important)</span></h4>
           <div id="tl-weights"></div>
           <button type="button" class="btn" id="tl-reset">Reset weights</button>
+          </div>
         </div>
 
         <div class="card" id="rank-card">

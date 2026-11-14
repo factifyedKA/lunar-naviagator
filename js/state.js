@@ -23,7 +23,7 @@ export function defaultState(now = Date.now()) {
     t,                     // current time (ms, UTC)
     t0: startOfUtcDay(t),  // start of the 30-day slider window
     hz: 0,                 // local horizon height in degrees (flat-horizon model)
-    speed: 'hour',         // time-lapse speed: "hour" or "day" per second
+    speed: 'day',          // time-lapse speed: "hour" or "day" per second
     zoom: 0,               // map zoom level index
     hm: 'terrain',         // horizon model: "terrain" (NASA LOLA) or "flat"
     emin: 0,               // minimum Earth height above the horizon for a radio link (deg)
@@ -54,7 +54,7 @@ export function encodeState(s) {
   if (s.site === CUSTOM_ID) p.set('c', `${s.lat.toFixed(3)},${s.lon.toFixed(3)}`);
   p.set('t', new Date(s.t).toISOString().slice(0, 16));
   if (s.hz) p.set('hz', String(s.hz));
-  if (s.speed !== 'hour') p.set('sp', s.speed);
+  if (s.speed !== 'day') p.set('sp', s.speed);
   if (s.zoom) p.set('z', String(s.zoom));
   if (s.hm === 'flat') p.set('hm', 'flat');
   if (s.emin) p.set('em', String(s.emin));
@@ -89,7 +89,7 @@ export function decodeState(text, now = Date.now()) {
     s.t0 = startOfUtcDay(t);
   }
   s.hz = num(p.get('hz'), -3, 5, 0);
-  if (p.get('sp') === 'day') s.speed = 'day';
+  if (p.get('sp') === 'hour') s.speed = 'hour';
   s.zoom = Math.round(num(p.get('z'), 0, 2, 0));
   if (p.get('hm') === 'flat') s.hm = 'flat';
   s.emin = Math.round(num(p.get('em'), 0, 10, 0) * 2) / 2;

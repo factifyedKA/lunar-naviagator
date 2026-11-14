@@ -20,10 +20,10 @@ import { $, el, clamp, fmtLat, fmtLon, fmtSigned, fmtDateTime, fmtDate, compass 
 const VIEWS = [
   { id: 'explore', label: 'Explore' },
   { id: 'timeline', label: 'Timeline & scores' },
-  { id: 'compare', label: 'Compare' },
+  { id: 'compare', label: 'Compare', expert: true },
   { id: 'finder', label: 'Best window' },
   { id: 'learn', label: 'Learn' },
-  { id: 'validation', label: 'Validation' },
+  { id: 'validation', label: 'Validation', expert: true },
   { id: 'about', label: 'About' },
 ];
 const MINUTE = 60e3;
@@ -32,6 +32,8 @@ let map;
 let sky;
 let hasCustom = false; // becomes true once the user has placed a custom point
 let frameRequested = false;
+let shownCustom = null; // the custom point currently written into the coordinate boxes
+let showWelcome = false; // the welcome card: only on a fresh visit (no shared link), in Simple mode
 
 // ---------- friendly error handling: never show a raw error to the user ----------
 function toast(message) {
@@ -48,7 +50,7 @@ window.addEventListener('unhandledrejection', () => toast('Something went wrong.
 function buildTabs() {
   const nav = $('#tabs');
   for (const v of VIEWS) {
-    nav.append(el('button', { type: 'button', class: 'tab', 'data-view': v.id, text: v.label,
+    nav.append(el('button', { type: 'button', class: v.expert ? 'tab expert-only' : 'tab', 'data-view': v.id, text: v.label,
       onclick: () => setState({ view: v.id, playing: false }) }));
   }
 }
@@ -69,8 +71,10 @@ function buildSiteList() {
   const box = $('#site-list');
   box.textContent = '';
   for (const g of GROUPS) {
-    box.append(el('p', { class: 'group-title' }, [g.title, el('small', { text: g.note })]));
-    box.append(el('ul', { class: 'site-list' }, SITES.filter((s) => s.group === g.id).map(siteButton)));
+    box.append(el('div', { id: `group-${g.id}` }, [
+      el('p', { class: 'group-title' }, [g.title, el('small', { text: g.note })]),
+      el('ul', { class: 'site-list' }, SITES.filter((s) => s.group === g.id).map(siteButton)),
+    ]));
   }
   if (hasCustom) {
     const s = getState();
@@ -94,7 +98,14 @@ function wireControls() {
     placeCustom(lat, lon);
   });
   $('#hz').addEventListener('input', (ev) => setState({ hz: Number(ev.target.value) }));
-  $('#mode-simple').addEventListener('click', () => setState({ mode: 'simple' }));
+  $('#mode-simple').addEventListener('click', () => {
+    const v = VIEWS.find((x) => x.id === getState().view);
+    setState({ mode: 'simple', view: v && v.expert ? 'explore' : getState().view }); // Simple has fewer tabs
+  });
+  const closeWelcome = (patch) => { showWelcome = false; setState({ ...patch }); };
+  $('#welcome-go').addEventListener('click', () => closeWelcome({}));
+  $('#welcome-best').addEventListener('click', () => closeWelcome({ view: 'finder' }));
+  $('#welcome-learn').addEventListener('click', () => closeWelcome({ view: 'learn' }));
   $('#mode-expert').addEventListener('click', () => setState({ mode: 'expert' }));
   $('#share-btn').addEventListener('click', () => shareLink(currentUrl(), toast));
   $('#map-png').addEventListener('click', () => {
@@ -240,6 +251,11 @@ function render() {
   document.body.classList.toggle('mode-simple', s.mode !== 'expert');
   $('#mode-simple').setAttribute('aria-pressed', String(s.mode !== 'expert'));
   $('#mode-expert').setAttribute('aria-pressed', String(s.mode === 'expert'));
+  const simple = s.mode !== 'expert';
+  $('#welcome').hidden = !(showWelcome && simple);
+  // Simple mode lists only the Artemis regions (plus the reference group if one of its sites is selected)
+  const refGroup = $('#group-reference');
+  if (refGroup) refGroup.classList.toggle('expert-only', site.group !== 'reference');
 
   // tabs and views
   const view = VIEWS.some((v) => v.id === s.view) ? s.view : 'explore';
@@ -259,8 +275,14 @@ function render() {
   $('#drop-btn').setAttribute('aria-pressed', String(s.drop));
   $('#drop-btn').textContent = s.drop ? 'Now tap the map…' : 'Drop a pin on the map';
   $('#map').classList.toggle('dropping', s.drop);
-  if (document.activeElement !== $('#custom-lat')) $('#custom-lat').value = hasCustom ? s.lat : '';
-  if (document.activeElement !== $('#custom-lon')) $('#custom-lon').value = hasCustom ? s.lon : '';
+  // fill the coordinate boxes only when the custom point itself changed, so a background
+  // redraw can never wipe what the user is typing
+  const customKey = hasCustom ? `${s.lat},${s.lon}` : '';
+  if (customKey !== shownCustom) {
+    shownCustom = customKey;
+    $('#custom-lat').value = hasCustom ? s.lat : '';
+    $('#custom-lon').value = hasCustom ? s.lon : '';
+  }
   $('#hz').value = s.hz;
   $('#hz-out').textContent = fmtSigned(s.hz);
   $('#hm-terrain').setAttribute('aria-pressed', String(s.hm !== 'flat'));
@@ -309,16 +331,20 @@ function render() {
 
   // read-outs
   $('#now-time').textContent = fmtDateTime(s.t);
+  const power = sunFrac > 0.001 && !vis.eclipse;
+  $('#now-verdict').textContent = power && vis.earthUp ? '✔ Power and ✔ radio contact right now'
+    : power ? '✔ Power, but ✖ no radio contact right now'
+      : vis.earthUp ? '✖ No sunlight, but ✔ radio contact right now' : '✖ No power and ✖ no radio contact right now';
   $('#sun-line').textContent = aboveBelow('Sun', sunRel);
   $('#sun-sub').textContent = direction(now.sun);
-  if (vis.eclipse) setChip($('#sun-chip'), 'part', '◐ Eclipse — the Earth is covering the Sun, little or no solar power');
+  if (vis.eclipse) setChip($('#sun-chip'), 'part', '~ Eclipse — the Earth is covering the Sun, little or no solar power');
   else if (sunFrac >= 0.999) setChip($('#sun-chip'), 'on', '✔ Full Sun — solar power available');
-  else if (sunFrac > 0.001) setChip($('#sun-chip'), 'part', `◐ Sun partly hidden — ${Math.round(sunFrac * 100)}% of its disc shows`);
+  else if (sunFrac > 0.001) setChip($('#sun-chip'), 'part', `~ Sun partly hidden — ${Math.round(sunFrac * 100)}% of its disc shows`);
   else setChip($('#sun-chip'), 'off', '✖ Sun hidden — no solar power');
   $('#earth-line').textContent = aboveBelow('Earth', earthRel);
   $('#earth-sub').textContent = direction(now.earth);
   if (vis.earthUp) setChip($('#earth-chip'), 'on', '✔ Earth in view — direct radio link possible');
-  else if (earthRel >= 0) setChip($('#earth-chip'), 'part', `◐ Earth is up, but below your ${s.emin}° margin — no reliable link`);
+  else if (earthRel >= 0) setChip($('#earth-chip'), 'part', `~ Earth is up, but below your ${s.emin}° margin — no reliable link`);
   else setChip($('#earth-chip'), 'off', '✖ Earth hidden — no direct radio link');
 
   renderLookAhead(s, model);
@@ -332,7 +358,9 @@ function render() {
     light: { sunLon: subSun.lon, sunLat: subSun.lat, earthLon: subEarthPoint(frame).lon }, relief: data.relief,
   });
   const edge = Math.abs(ZOOMS[s.zoom]);
-  $('#map-caption').textContent = `Polar map from ${edge}°S to the pole; the side facing Earth is at the top. `
+  $('#map-caption').textContent = simple
+    ? 'The Moon’s south pole seen from above. The arrows show where the Sun and the Earth are. The darker half is night. Ground shape from NASA data; site positions are approximate.'
+    : `Polar map from ${edge}°S to the pole; the side facing Earth is at the top. `
     + 'Arrows on the rim point towards the Sun and the Earth right now; the darker half is night on a smooth Moon '
     + '(real terrain shadows are not shown). '
     + (data.relief ? 'Background: shaded relief made from NASA LRO/LOLA elevation data, with artificial lighting.'
@@ -344,7 +372,10 @@ function render() {
     lat: model.lat, hz: model.hz, mask: model.mask, centerAz: meanEarthAzimuth(model.lat, model.lon),
     sun: now.sun, earth: now.earth, trail: getTrail(s.t0, model.lat, model.lon, model.heightKm),
   });
-  $('#sky-caption').textContent = `Full 360° view of the horizon from ${site.name} at ${fmtDateTime(s.t)}. `
+  $('#sky-caption').textContent = simple
+    ? `The view all the way around ${site.name}. Grey is the ground${model.kind === 'terrain' ? ' (real shape, from NASA data)' : ' (flat, simplified)'}. `
+      + 'Dotted lines show where the Sun and the Earth travel this month. Heights are stretched so they are easier to see.'
+    : `Full 360° view of the horizon from ${site.name} at ${fmtDateTime(s.t)}. `
     + `Heights are stretched about ${Math.max(1, Math.round(stretch))}× so small angles are easy to see. `
     + `Dotted lines: path of the Sun (yellow) and the Earth (blue) from ${fmtDate(s.t0)} to ${fmtDate(s.t0 + WINDOW_DAYS * DAY)}. `
     + horizonNote(model);
@@ -369,7 +400,11 @@ function render() {
 
 // ---------- start ----------
 async function start() {
-  const s = initStateFromUrl();
+  showWelcome = window.location.hash.length < 2;
+  const s0 = initStateFromUrl();
+  const first = VIEWS.find((v) => v.id === s0.view);
+  if (first && first.expert && s0.mode !== 'expert') setState({ mode: 'expert' }); // a shared link to an expert-only tab
+  const s = getState();
   hasCustom = s.site === CUSTOM_ID;
   buildTabs();
   buildSiteList();

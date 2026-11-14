@@ -202,3 +202,21 @@ fallback was replaced by real terrain. Flat mode is kept as a clearly labelled o
   are not displayed.
 - **Publishing:** the build machine cannot switch on GitHub Pages; the owner does this in
   the repository settings (steps in README.md).
+
+## After first user test — "too complicated"
+The owner opened the live site and found the first screen overwhelming. Simple mode (the
+default) was cut down:
+- A welcome card on a fresh visit says what the tool is for in two sentences, gives three
+  steps and three big buttons (explore, best place to land, short tour).
+- Simple mode shows five tabs (Explore, Timeline & scores, Best window, Learn, About);
+  Compare and Validation appear in Expert. A shared link to an expert-only tab switches to
+  Expert automatically.
+- The site list shows only the nine Artemis regions, without coordinates; the reference
+  points appear in Expert (or when one of them is selected).
+- Explore keeps only Play, Now and the slider; day-stepping, speed choice, typed date,
+  coordinates and PNG buttons are Expert. Time-lapse default is now 1 day per second.
+- A one-line verdict ("Power and radio contact right now") heads the read-outs.
+- Captions are shorter in Simple mode but still state what is simplified or approximate.
+- The score explanation table and weight sliders are Expert; Simple shows the score, its
+  strongest and weakest part, and a pointer to Expert.
+- Bug fixed: a background redraw could wipe a typed latitude while typing the longitude.
