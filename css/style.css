@@ -208,7 +208,7 @@ output { color: var(--text); font-weight: 700; font-variant-numeric: tabular-num
   font-size: 2.2rem; font-weight: 800; border: 4px solid var(--accent); background: #0e1422; font-variant-numeric: tabular-nums;
 }
 .why summary { cursor: pointer; font-weight: 700; min-height: var(--touch); display: flex; align-items: center; }
-.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; position: relative; } /* relative: keeps screen-reader-only labels inside the scroll area */
 table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
 th, td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 th:first-child, td:first-child, tbody th, thead th:nth-child(2) { text-align: left; }

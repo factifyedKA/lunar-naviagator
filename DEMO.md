@@ -5,7 +5,8 @@ few words; no images of people under 18 (the slides use only app screenshots).
 Replace **[TEAM NAME]** and **[MEMBER NAMES]** before presenting.
 
 Screenshots to use (already in the repository):
-`docs/screenshot-explore.png`, `docs/screenshot-timeline.png`, `docs/screenshot-finder.png`.
+`docs/screenshot-explore.png`, `docs/screenshot-timeline.png`, `docs/screenshot-finder.png`,
+`docs/screenshot-moon3d.png`, `docs/mission-brief-example.png`.
 Design tip: dark background, white text, at least 32 pt, one idea per slide.
 
 ---
@@ -57,14 +58,16 @@ solar power available'. Press Play and watch a whole lunar day go by."
 - Three steps: **Pick a site → Pick dates → Get answers**
 - Timeline: power, radio, both (`docs/screenshot-timeline.png`)
 - Score from 0 to 100 that explains itself
-- Compare up to four sites · Simple and Expert modes · Learn tour
+- 3D Moon you can turn with a finger (`docs/screenshot-moon3d.png`)
+- Compare · Simple and Expert modes · Learn tour and worksheet
 
 **Speaker notes**
 "The experience is three steps. Pick a site, pick dates, get answers. The timeline shows
 when there is power, when there is radio contact and when both overlap. Five key numbers
 and one overall score sum it up, and a 'Why this score?' table shows every point. You
-choose what matters with sliders. A guided tour and tap-to-explain words teach the science,
-and everything exports as picture, spreadsheet or share link."
+choose what matters with sliders. A 3D Moon shows where the sites sit and where the Sun and
+Earth are. A guided tour, tap-to-explain words and a classroom worksheet teach the science,
+and everything exports as picture, spreadsheet, one-page mission brief or share link."
 
 ---
 
@@ -72,18 +75,21 @@ and everything exports as picture, spreadsheet or share link."
 **On the slide**
 - Screenshot: `docs/screenshot-finder.png`
 - "Tell it your mission length. It finds the best place and date."
+- One-tap questions · one-page Mission Brief (`docs/mission-brief-example.png`)
 
 **Speaker notes**
 "The best-window finder is our favourite part. Say your mission lasts fourteen days. The
 tool tries every start date at every site and ranks them. In this example, searching from
 January 2027, several high sites reach a perfect score: two weeks of unbroken sunlight and
-unbroken contact with Earth. The list tells you exactly which dates."
+unbroken contact with Earth. The list tells you exactly which dates. On the first screen,
+one-tap questions give the same answer in a sentence, and a Mission Brief puts the numbers,
+the timeline and the limitations on one printable page."
 
 ---
 
 ## Slide 6 — Made possible by NASA and space-agency data
 **On the slide**
-- **Terrain:** NASA LRO / LOLA elevation model (240 m)
+- **Terrain:** NASA LRO / LOLA elevation models (240 m polar, global for the 3D Moon)
 - **Checked against:** NASA JPL Horizons — within 0.007°
 - **Checked against:** NASA LOLA illumination maps — within about 3 points on average
 - **Sites:** NASA Artemis III candidate regions
@@ -100,15 +106,16 @@ and shows pass or fail. Where we simplify, we say so on screen."
 
 ## Slide 7 — Impact and what comes next
 **On the slide**
-- Free, no login, works on a tablet
+- Free, no login, works on a tablet — even offline
 - For planners, classrooms and the public
 - Next: finer terrain, relay satellites, other poles and worlds
 - Try it: factifyedka.github.io/lunar-naviagator
 - Team **[TEAM NAME]**
 
 **Speaker notes**
-"It is free, needs no login and runs on a tablet. Planners get a fast first look, teachers
-get a hands-on lesson, and the public can follow Artemis. Next we would add finer terrain
+"It is free, needs no login and runs on a tablet, even without a network after the first
+visit. Planners get a fast first look, teachers get a hands-on lesson with a ready worksheet,
+and the public can follow Artemis. Next we would add finer terrain
 around each site, relay satellites for the far side, and the north pole. Thank you — please
 try it yourself."
 
@@ -121,7 +128,7 @@ try it yourself."
 | 0–5 s | Title card: project name, tagline, team name | "We are [TEAM NAME], and this is the Lunar Landing Site Navigator." |
 | 5–11 s | Map, then time-lapse of the Sun skimming the horizon | "At the Moon's south pole the Sun skims the horizon and the Earth plays hide-and-seek. No Sun, no power. No Earth, no radio." |
 | 11–16 s | Tap a site; horizon view with real skyline | "Find the light. Keep the link. Tap any landing site to see the Sun and the Earth against the real skyline." |
-| 16–24 s | Timeline strips, score, then best-window ranking | "Using NASA's lunar terrain data, it shows when you have power and contact, scores every site, and finds your best landing window." |
+| 16–24 s | Timeline strips, best-window ranking, then a spin of the 3D Moon | "Using NASA's lunar terrain data, it shows when you have power and contact, scores every site, and finds your best landing window." |
 | 24–30 s | Validation page "All checks passed", then the link | "Checked live against NASA data — and one day, ready to plan for any world. Try it now." |
 
 Word count of the voice-over: about 85 words, comfortable for 30 seconds.

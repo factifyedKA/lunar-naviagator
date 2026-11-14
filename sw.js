@@ -2,7 +2,7 @@
 // Strategy: NETWORK FIRST. Whenever the device is online the newest files are fetched (and
 // saved); the saved copies are used only when the network is unavailable. This way a new
 // version of the site is never hidden by an old cache.
-const CACHE = 'llsn-offline-v3';
+const CACHE = 'llsn-offline-v4';
 const FILES = [
   "./",
   "index.html",

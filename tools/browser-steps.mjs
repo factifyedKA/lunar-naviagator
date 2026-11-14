@@ -122,6 +122,32 @@ export default async function run({ session, base }) {
     });
   }
 
+  // every tab must work in Simple mode as well as in Expert mode
+  for (const mode of ['simple', 'expert']) {
+    await session(`tabs-${mode}`, portrait, async (page, shot, check) => {
+      await page.goto(`${base}#v=explore&s=mouton${mode === 'expert' ? '&m=x' : ''}`);
+      await page.waitForSelector('.site-btn');
+      const ready = {
+        explore: () => /Sun is/.test(document.querySelector('#sun-line').textContent),
+        timeline: () => document.querySelector('#tl-score').textContent !== '–' && document.querySelectorAll('#rank-table tbody tr').length === 13,
+        compare: () => document.querySelectorAll('#cmp-table tbody tr').length === 6,
+        finder: () => document.querySelectorAll('#fw-table tbody tr').length > 0,
+        moon3d: () => document.querySelectorAll('.pin3d:not([hidden])').length >= 13 || !document.querySelector('#m3-fallback').hidden,
+        learn: () => document.querySelector('#learn-title').textContent.length > 0,
+        validation: () => /checks passed/.test(document.querySelector('#val-summary').textContent) && document.querySelectorAll('#val-list .check').length >= 22,
+        about: () => document.querySelector('#about-title').offsetParent !== null,
+      };
+      for (const [view, fn] of Object.entries(ready)) {
+        await page.click(`.tab[data-view="${view}"]`);
+        const ok = await page.waitForFunction(fn, null, { timeout: 60000 }).then(() => true, () => false);
+        check(ok && await page.isVisible(`#view-${view}`), `${view} tab works in ${mode} mode`);
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+        check(!overflow, `${view} tab fits the iPad portrait width in ${mode} mode`);
+      }
+      if (mode === 'simple') { await page.click('.tab[data-view="validation"]'); check(/^All \d+ checks passed\.$/.test(await page.textContent('#val-summary')), 'validation passes in Simple mode'); }
+    });
+  }
+
   await session('phone', { width: 390, height: 844 }, async (page, shot, check) => {
     await page.goto(base);
     await page.waitForSelector('.site-btn');

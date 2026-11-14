@@ -20,6 +20,15 @@ sites and dates by **where the Sun and the Earth are relative to the horizon**
 | 6 | Validation page (JPL Horizons + NASA LOLA illumination maps), About page, look-ahead countdown, SUBMISSION.md, DEMO.md | done (publishing needs the owner to switch on GitHub Pages) |
 | + | Extras: "how long until the Sun/Earth sets or returns" countdown — done. 3D Moon view — not built (time) | |
 
+## Enhancement round (after the first live version, tagged v1-safe = commit e56fcb2)
+| Step | What | Status |
+|------|------|--------|
+| 1 | Compare/Validation tabs in Simple mode; two sky angles labelled unambiguously | done |
+| 2 | Scenario cards, Mission Brief, validation headline, classroom worksheet | done |
+| 3 | First-visit time-lapse, larger touch targets, offline support and home-screen install | done |
+| 4 | 3D Moon tab (Three.js, NASA LOLA global relief) | done |
+| 5 | About, SUBMISSION.md and DEMO.md updated | done |
+
 ## How the code is organised
 ```
 index.html          page shell (header, control panel, views)
@@ -43,6 +52,10 @@ js/glossary.js      glossary words and tap-to-explain tooltips
 js/export.js        CSV / PNG download and share-link helpers
 js/validation-view.js  live checks against NASA references and known physics
 js/team.js          team name and members for the About page
+js/scenarios.js     one-tap "Quick questions" on the Explore tab
+js/brief.js         one-page Mission Brief (PNG / print)
+js/moon3d.js        3D Moon tab (loaded on demand)
+sw.js, manifest.webmanifest, icons/   offline support and home-screen install
 data/               small files generated from NASA LOLA data + the year simulation
 js/ui.js            small helpers (formatting, canvas sizing, colours)
 vendor/             third-party library committed to the repo (astronomy-engine, MIT)
