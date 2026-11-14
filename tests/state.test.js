@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { SITES, FEATURES, getSite, LAT_MIN, LAT_MAX } from '../js/sites.js';
 import { defaultState, encodeState, decodeState } from '../js/state.js';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 
 test('sites: unique ids, inside the 80S-90S cap, numbered 1..n', () => {
   const ids = new Set(SITES.map((s) => s.id));
@@ -55,4 +55,15 @@ test('the site list, the map, the ranking and the data files all cover exactly t
   assert.deepEqual(Object.keys(json('horizons.json').sites).sort(), ids);   // terrain horizons (map + sky)
   assert.deepEqual(Object.keys(json('year-sim.json').sites).sort(), ids);   // whole-year ranking
   assert.equal(new Set(SITES.map((s) => s.n)).size, ids.length);            // one number per site, as drawn on the map
+});
+
+test('offline support: the service worker lists every file the app needs', () => {
+  const sw = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
+  const listed = JSON.parse(sw.slice(sw.indexOf('const FILES = ') + 14, sw.indexOf('];') + 1));
+  const need = ['index.html', 'css/style.css', 'manifest.webmanifest',
+    ...readdirSync(new URL('../js/', import.meta.url)).map((f) => `js/${f}`),
+    ...readdirSync(new URL('../data/', import.meta.url)).map((f) => `data/${f}`),
+    ...readdirSync(new URL('../vendor/', import.meta.url)).filter((f) => f.endsWith('.js')).map((f) => `vendor/${f}`)];
+  for (const f of need) assert.ok(listed.includes(f), `${f} is missing from sw.js`);
+  assert.ok(sw.includes('fetch(req).then'), 'network-first strategy');
 });

@@ -241,3 +241,14 @@ default) was cut down:
 - **Validation headline:** computed live from the same checks, never typed in by hand.
 - **Classroom worksheet:** four questions; the teacher's key for question 2 is filled from
   the real year simulation, the other notes are qualitative.
+- **First-visit intro:** on a fresh visit (no shared link) the Explore view plays about
+  seven seconds of time-lapse at 1 day per second, then returns to the present. Any tap
+  or key press stops it at once. Skipped when the device asks for reduced motion. The
+  intro note keeps its space when it disappears so that buttons never move under a finger
+  (a real tap-miss bug found by the browser test).
+- **Offline / home screen:** `sw.js` is a network-first service worker: online it always
+  fetches the newest files and saves a copy; the copies are used only when offline, so a
+  new deployment is never hidden by an old cache. `manifest.webmanifest` and the icons
+  (drawn by `tools/make-icons.mjs`) make the site installable from Share → Add to Home
+  Screen. A test checks that every app file is on the offline list.
+- **Touch targets:** small buttons raised to 40 px, info buttons to 36 px.

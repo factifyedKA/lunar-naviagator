@@ -8,7 +8,7 @@ import { extname, join, resolve } from 'node:path';
 
 const root = resolve(new URL('..', import.meta.url).pathname);
 const out = resolve(process.argv[2] || 'screenshots');
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png' };
+const types = { '.webmanifest': 'application/manifest+json', '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png' };
 const server = createServer(async (req, res) => {
   try {
     const path = decodeURIComponent(new URL(req.url, 'http://x').pathname);

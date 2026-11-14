@@ -220,6 +220,8 @@ td.strong { font-weight: 800; }
   background: none; border: 0; padding: 0; min-height: 36px; color: var(--accent); font-weight: 700;
   text-decoration: underline; cursor: pointer; text-align: left;
 }
+.link-btn { min-height: 40px; }
+.card-head { flex-wrap: wrap; }
 h4 { margin: 16px 0 6px; font-size: 1rem; }
 .note-inline { color: var(--dim); font-weight: 400; font-size: 0.85rem; }
 .weight-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(120px, 1fr) 24px; gap: 10px; align-items: center; }
@@ -239,7 +241,7 @@ td.best { font-weight: 800; color: #7fe0c2; }
 .answer { font-size: 1.1rem; font-weight: 700; margin: 8px 0 10px; }
 .stack { display: flex; flex-direction: column; gap: 14px; }
 .score-chart { height: 220px; cursor: default; }
-.btn.small { min-height: 36px; padding: 0 10px; font-size: 0.85rem; }
+.btn.small { min-height: 40px; padding: 0 12px; font-size: 0.88rem; }
 input:disabled { opacity: 0.4; }
 
 /* ---------- learn mode, glossary, simple/expert ---------- */
@@ -279,7 +281,9 @@ input:disabled { opacity: 0.4; }
 .prose code { background: #0e1422; padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
 .refs { font-size: 0.9rem; color: var(--dim); word-break: break-word; }
 .ro-angles { color: var(--dim); font-size: 0.88rem; font-variant-numeric: tabular-nums; }
-.info-btn { text-decoration: none; color: var(--accent); font-size: 1.05rem; min-width: 28px; min-height: 28px; }
+.info-btn { text-decoration: none; color: var(--accent); font-size: 1.15rem; min-width: 36px; min-height: 36px; }
+.intro-note { color: var(--sun); font-weight: 700; font-size: 0.95rem !important; visibility: hidden; } /* keeps its space, so nothing jumps when it disappears */
+.intro-note.on { visibility: visible; }
 .ro-next { color: var(--dim); font-size: 0.85rem; margin-top: 4px; font-variant-numeric: tabular-nums; }
 
 /* ---------- simple mode: a calmer first screen ---------- */

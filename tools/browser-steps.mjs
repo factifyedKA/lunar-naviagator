@@ -2,6 +2,8 @@
 const landscape = { width: 1180, height: 820 };  // iPad Air landscape
 const portrait = { width: 820, height: 1180 };   // iPad Air portrait
 
+const exists = async (file) => { const { existsSync } = await import('node:fs'); return existsSync(new URL(`../${file}`, import.meta.url)); };
+
 export default async function run({ session, base }) {
   await session('landscape', landscape, async (page, shot, check) => {
     await page.goto(base);
@@ -11,10 +13,17 @@ export default async function run({ session, base }) {
     await shot('1-start');
     if (await page.locator('#welcome').count()) {
       check(await page.isVisible('#welcome'), 'welcome card greets a first-time visitor');
+      const t1 = await page.textContent('#now-time');
+      await page.waitForTimeout(1500);
+      check(await page.locator('#intro-note.on').count() === 1 && t1 !== await page.textContent('#now-time'), 'intro time-lapse plays on a first visit');
       check(await page.locator('.tab:visible').count() === 7, 'all seven tabs are visible in Simple mode, including Compare and Validation');
       check(await page.locator('.site-btn:visible').count() === 13, 'site list shows all 13 sites, the same as the map and the ranking');
       await page.click('#welcome-go');
+      await page.waitForFunction(() => document.querySelector('#welcome').hidden, null, { timeout: 3000 }).catch(() => {});
       check(!(await page.isVisible('#welcome')), 'welcome card closes');
+      check((await page.getAttribute('#play', 'aria-pressed')) === 'false', 'a tap stops the intro time-lapse');
+      const sw = await page.evaluate(() => navigator.serviceWorker.ready.then((r) => Boolean(r.active)).catch(() => false));
+      check(sw, 'offline service worker is active');
       check(/right now/.test(await page.textContent('#now-verdict')), 'plain verdict line is shown');
     }
     if (await page.locator('#mode-expert').count()) {
@@ -91,6 +100,26 @@ export default async function run({ session, base }) {
       await shot('2-sky');
     }
   });
+
+  if (await exists('sw.js')) {
+    await session('offline', landscape, async (page, shot, check) => {
+      await page.goto(base);
+      await page.waitForSelector('.site-btn');
+      await page.evaluate(() => navigator.serviceWorker.ready);
+      await page.waitForTimeout(4000);                 // let the worker save its copies
+      await page.context().setOffline(true);
+      await page.goto(base + '#v=timeline&s=ridge');
+      await page.waitForSelector('.site-btn');
+      await page.waitForFunction(() => document.querySelector('#tl-score').textContent !== '–', null, { timeout: 20000 })
+        .catch(() => check(false, 'timeline works offline'));
+      check(await page.locator('#rank-table tbody tr').count() === 13, 'ranking loads offline');
+      await page.click('.tab[data-view="explore"]');
+      await page.waitForTimeout(500);
+      check(/Sun is/.test(await page.textContent('#sun-line')), 'Explore works offline');
+      await shot('1-offline');
+      await page.context().setOffline(false);
+    });
+  }
 
   await session('phone', { width: 390, height: 844 }, async (page, shot, check) => {
     await page.goto(base);

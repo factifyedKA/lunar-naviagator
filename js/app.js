@@ -452,6 +452,38 @@ async function start() {
   const ok = await loadData(requestRender);   // …then add terrain and pre-computed results
   if (!ok) toast('Terrain data could not be loaded, so a flat horizon is used.');
   requestRender();
+  if (showWelcome) playIntro();
+  registerOffline();
+}
+
+// ---------- first-visit intro: a few seconds of time-lapse so the page comes alive ----------
+function playIntro() {
+  const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (calm || getState().view !== 'explore') return;
+  const t = getState().t;
+  let running = true;
+  const stop = () => {
+    if (!running) return;
+    running = false;
+    window.removeEventListener('pointerdown', stop, true);
+    window.removeEventListener('keydown', stop, true);
+    $('#intro-note').classList.remove('on'); // (no layout change: a tap must land where the finger is)
+    setPlaying(false);
+    setState({ t }); // back to the present moment
+  };
+  window.addEventListener('pointerdown', stop, true); // any tap or key press hands control to the user
+  window.addEventListener('keydown', stop, true);
+  $('#intro-note').classList.add('on');
+  setState({ speed: 'day' });
+  setPlaying(true);
+  setTimeout(stop, 7000);
+}
+
+// ---------- offline support (installable on the home screen) ----------
+function registerOffline() {
+  const local = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  if (!('serviceWorker' in navigator) || (window.location.protocol !== 'https:' && !local)) return;
+  navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is optional */ });
 }
 
 start();
