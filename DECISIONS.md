@@ -155,3 +155,20 @@ fallback was replaced by real terrain. Flat mode is kept as a clearly labelled o
   period, scores each with the same composite score as everywhere else, and lists the ten
   best. Windows of the same site in the list never overlap; different sites may share dates.
   Mission length 1–60 days; search period 90, 180 or 365 days. Runs in the Web Worker.
+
+## Milestone 5 — learn mode, Simple/Expert, export and share
+- **Simple is the default.** It hides azimuth/elevation numbers, typed coordinates, the
+  horizon-model switch, the radio margin and the elevation curves. Expert shows everything.
+  The choice is kept in the share link (`m=x`). Honesty labels stay visible in both modes.
+- **Guided tour:** six short steps; every step has a "Show me" button that opens the real
+  tool in a prepared state (for example the floor of Shackleton crater, which our terrain
+  model reports as 0% sunlit for the whole of 2027 — a permanently shadowed region).
+- **Glossary tooltips** are added automatically to the first mention of each term in hints,
+  captions, notes and the About text; tap, hover or keyboard focus opens them.
+- **Diagrams** in the tour are simple drawings made for this project (no external images,
+  no people).
+- **CSV files** start with `#` comment lines that record the site, viewpoint, horizon
+  model and settings, so an exported file explains itself.
+- **PNG files** are composed on the dark background with a title and a data-credit line.
+- **Share link** copies the URL (which holds the full state); if the browser refuses
+  clipboard access it opens the system share sheet instead.

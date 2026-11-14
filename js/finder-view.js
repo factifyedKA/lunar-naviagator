@@ -8,10 +8,12 @@ import { windowsJob } from './compute.js';
 import { siteModel, modelKey, horizonNote } from './model.js';
 import { drawScoreCurve } from './chart.js';
 import { $, el, fmtDate } from './ui.js';
+import { downloadCsv, downloadPng, slug } from './export.js';
 
 let requestRender = () => {};
 let cache = { key: null, result: null, busy: false }; // result: [{ site, model, windows }]
 const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
+let lastTop = []; // the ranking currently shown (for CSV export)
 
 export function initFinderView(onChange) {
   requestRender = onChange;
@@ -28,6 +30,17 @@ export function initFinderView(onChange) {
   $('#fw-all').addEventListener('click', () => setState({ sc: 'all' }));
   $('#fw-site').addEventListener('click', () => setState({ sc: 'site' }));
   $('#fw-today').addEventListener('click', () => setState({ rs: startOfUtcDay(Date.now()) }));
+  $('#fw-png').addEventListener('click', () => downloadPng(`best-window-${slug($('#fw-chart-title').textContent)}.png`,
+    `${$('#fw-chart-title').textContent} · ${getState().ml}-day mission`, [{ canvas: $('#fw-chart') }], 'Overall score (0-100) by mission start date.'));
+  $('#fw-csv').addEventListener('click', () => {
+    const s = getState();
+    if (!lastTop.length) return;
+    downloadCsv(`best-windows-${s.ml}d.csv`, ['Lunar Landing Site Navigator - best landing windows',
+      `mission length ${s.ml} days; searched ${iso(s.rs)} + ${s.fd} days; Earth minimum elevation ${s.emin} deg; horizon model ${s.hm}; score weights (sun,dark,earth,gap,both): ${s.w.join(' ')}`],
+    [['rank', 'site', 'start_utc', 'end_utc', 'score_0_100', 'sunlit_pct', 'longest_darkness_h', 'earth_visible_pct', 'longest_radio_gap_h', 'sun_and_earth_pct'],
+      ...lastTop.map((w, i) => [i + 1, w.site.name, iso(s.rs + w.start * HOUR), iso(s.rs + w.start * HOUR + s.ml * DAY), w.score.toFixed(1),
+        w.summary.sunlitPct.toFixed(2), w.summary.longestDarkH, w.summary.earthPct.toFixed(2), w.summary.longestOutageH, w.summary.overlapPct.toFixed(2)])]);
+  });
 }
 
 export function renderFinderView() {
@@ -63,6 +76,7 @@ export function renderFinderView() {
   // ranking: best non-overlapping windows (per site), highest score first
   const all = cache.result.flatMap((r) => r.windows.map((w) => ({ ...w, site: r.site })));
   const top = topWindows(all, 10, s.ml * 24, (w) => w.site.id);
+  lastTop = top;
   const body = $('#fw-table tbody');
   body.textContent = '';
   top.forEach((w, i) => {

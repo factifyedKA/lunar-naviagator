@@ -8,7 +8,8 @@ import { summarize, compositeScore, fmtDuration, SCORE_PARTS, SCORE_CAP_H, DEFAU
 import { seriesJob } from './compute.js';
 import { data, siteModel, modelKey, horizonNote } from './model.js';
 import { drawTimeline, timelineHeight } from './chart.js';
-import { $, el, fmtDate, fmtDateTime, fmtSigned } from './ui.js';
+import { $, el, fmtDate, fmtDateTime, fmtSigned, fmtLat, fmtLon } from './ui.js';
+import { downloadCsv, downloadPng, slug } from './export.js';
 
 let requestRender = () => {};
 let cache = { key: null, series: null, summary: null, busy: false };
@@ -31,6 +32,28 @@ export function initTimelineView(onChange) {
   $('#tl-goto').addEventListener('click', () => {
     const s = getState();
     if (cursor != null) setState({ view: 'explore', t: s.rs + cursor * HOUR, playing: false });
+  });
+
+  $('#tl-csv').addEventListener('click', exportCsv);
+  $('#tl-png').addEventListener('click', () => {
+    const s = getState();
+    const site = getSite(s.site, s.lat, s.lon);
+    if (cache.series) downloadPng(`timeline-${slug(site.name)}-${iso(s.rs)}-${s.rd}d.png`,
+      `Power and communication timeline · ${site.name} · ${fmtDate(s.rs)} to ${fmtDate(s.rs + s.rd * DAY)}`, [{ canvas: $('#tl-chart') }],
+      `Sunlit ${cache.summary.sunlitPct.toFixed(1)}%, Earth visible ${cache.summary.earthPct.toFixed(1)}%, both ${cache.summary.overlapPct.toFixed(1)}%.`);
+  });
+  $('#rank-csv').addEventListener('click', () => {
+    const s = getState();
+    const sim = data.yearSim;
+    if (!sim) return;
+    const mode = s.hm === 'flat' ? 'flat' : 'terrain';
+    const rows = SITES.map((site) => ({ site, m: sim.sites[site.id][mode], score: compositeScore(sim.sites[site.id][mode], s.w).score }))
+      .sort((a, b) => b.score - a.score);
+    downloadCsv(`year-ranking-${sim.year}.csv`, [
+      `Lunar Landing Site Navigator - whole-year ranking ${sim.year}, hourly steps`,
+      `horizon model: ${mode}; Earth minimum elevation: 0 deg; score weights (sun,dark,earth,gap,both): ${s.w.join(' ')}`,
+    ], [['rank', 'site', 'score_0_100', 'sunlit_pct', 'longest_darkness_h', 'earth_visible_pct', 'longest_radio_gap_h', 'sun_and_earth_pct'],
+      ...rows.map((r, i) => [i + 1, r.site.name, r.score.toFixed(1), r.m.sunlitPct, r.m.longestDarkH, r.m.earthPct, r.m.longestOutageH, r.m.overlapPct])]);
   });
 
   // tap or drag on the chart to read exact values
@@ -78,6 +101,27 @@ function ensureSeries(s, model) {
   }, () => { if (cache.key === key) { cache.busy = false; requestRender(); } });
 }
 
+function exportCsv() {
+  const s = getState();
+  if (!cache.series) return;
+  const site = getSite(s.site, s.lat, s.lon);
+  const model = siteModel(s, site, requestRender);
+  const c = cache.series;
+  const m = cache.summary;
+  const rows = [['time_utc', 'sun_height_above_horizon_deg', 'sun_disc_fraction_in_view', 'earth_height_above_horizon_deg', 'earth_link_possible']];
+  for (let i = 0; i < c.sunFrac.length; i++) {
+    rows.push([new Date(s.rs + i * HOUR).toISOString().slice(0, 16) + 'Z', c.sunH[i].toFixed(3), c.sunFrac[i].toFixed(3), c.earthH[i].toFixed(3), c.earthUp[i]]);
+  }
+  downloadCsv(`timeline-${slug(site.name)}-${iso(s.rs)}-${s.rd}d.csv`, [
+    'Lunar Landing Site Navigator - power and communication timeline',
+    `site: ${site.name} (${fmtLat(site.lat)} ${fmtLon(site.lon)}${site.approx ? ', approximate marker' : ''})`,
+    `viewpoint used: ${fmtLat(model.lat)} ${fmtLon(model.lon)}, height ${Math.round((model.heightKm || 0) * 1000)} m`,
+    horizonNote(model),
+    `Earth minimum elevation for a link: ${s.emin} deg`,
+    `summary: sunlit ${m.sunlitPct.toFixed(2)}%, longest darkness ${m.longestDarkH} h, Earth visible ${m.earthPct.toFixed(2)}%, longest radio gap ${m.longestOutageH} h, both ${m.overlapPct.toFixed(2)}%`,
+  ], rows);
+}
+
 export function renderTimelineView() {
   const s = getState();
   const site = getSite(s.site, s.lat, s.lon);
@@ -90,15 +134,16 @@ export function renderTimelineView() {
   const end = s.rs + s.rd * DAY;
 
   const canvas = $('#tl-chart');
-  canvas.style.height = `${timelineHeight(true)}px`;
+  const curves = s.mode === 'expert'; // Simple mode shows just the three strips
+  canvas.style.height = `${timelineHeight(curves)}px`;
   $('#tl-busy').hidden = Boolean(cache.series);
   $('#tl-busy').textContent = cache.busy ? 'Calculating…' : 'The calculation could not be completed. Please try another date.';
   canvas.style.visibility = cache.series ? 'visible' : 'hidden';
   if (!cache.series) return;
 
-  chartGeom = drawTimeline(canvas, { series: cache.series, startMs: s.rs, curves: true, cursor });
+  chartGeom = drawTimeline(canvas, { series: cache.series, startMs: s.rs, curves, cursor });
   $('#tl-caption').textContent = `${site.name}, ${fmtDate(s.rs)} to ${fmtDate(end)} (${s.rd} days, one sample per hour). `
-    + 'Top: height of the Sun (yellow) and the Earth (blue) above the local horizon. '
+    + (curves ? 'Top: height of the Sun (yellow) and the Earth (blue) above the local horizon. ' : '')
     + 'Strips: yellow = some sunlight for power, blue = Earth in view for a direct radio link'
     + `${s.emin > 0 ? ` (at least ${s.emin}° above the horizon)` : ''}, green = both together; dark = neither. `
     + horizonNote(model);

@@ -17,6 +17,7 @@ export function defaultState(now = Date.now()) {
   const t = Math.round(now / HOUR) * HOUR;
   return {
     view: 'explore',
+    mode: 'simple',       // "simple" hides expert details; "expert" shows everything
     site: 'malapert',     // selected site id, or "custom"
     lat: -89.0, lon: 45.0, // the custom point
     t,                     // current time (ms, UTC)
@@ -48,6 +49,7 @@ const num = (v, lo, hi, fallback) => {
 export function encodeState(s) {
   const p = new URLSearchParams();
   p.set('v', s.view);
+  if (s.mode === 'expert') p.set('m', 'x');
   p.set('s', s.site);
   if (s.site === CUSTOM_ID) p.set('c', `${s.lat.toFixed(3)},${s.lon.toFixed(3)}`);
   p.set('t', new Date(s.t).toISOString().slice(0, 16));
@@ -72,6 +74,7 @@ export function decodeState(text, now = Date.now()) {
   const p = new URLSearchParams(String(text || '').replace(/^#/, ''));
   const view = p.get('v');
   if (view && /^[a-z]+$/.test(view)) s.view = view;
+  if (p.get('m') === 'x') s.mode = 'expert';
   const site = p.get('s');
   if (site === CUSTOM_ID || SITES.some((x) => x.id === site)) s.site = site;
   const c = (p.get('c') || '').split(',');
@@ -137,6 +140,13 @@ function scheduleUrlUpdate() {
 }
 
 /** Read the URL once at start-up and whenever the user edits it or uses back/forward. */
+/** The link for the current state, written to the address bar immediately. */
+export function currentUrl() {
+  clearTimeout(urlTimer);
+  try { history.replaceState(null, '', `#${encodeState(state)}`); } catch { /* ignore */ }
+  return window.location.href;
+}
+
 export function initStateFromUrl() {
   state = decodeState(window.location.hash);
   window.addEventListener('hashchange', () => {

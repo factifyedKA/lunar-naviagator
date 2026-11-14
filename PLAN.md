@@ -16,8 +16,8 @@ sites and dates by **where the Sun and the Earth are relative to the horizon**
 | 2 | Sun/Earth calculations (real ephemeris + IAU Moon rotation), horizon view, time slider and time-lapse, automated tests | done |
 | 3 | Real NASA LOLA terrain horizons + relief map, power and comms timeline, scores, composite score with weights, year simulation script, Web Worker | done |
 | 4 | Compare 2–4 sites/dates, best-window finder | done |
-| 5 | Learn mode (tour, glossary, Simple/Expert), CSV/PNG export | next |
-| 6 | Validation page, About page, polish, publish, SUBMISSION.md, DEMO.md | |
+| 5 | Learn mode (tour, glossary, Simple/Expert), CSV/PNG export, share link | done |
+| 6 | Validation page, About page, polish, publish, SUBMISSION.md, DEMO.md | next |
 | + | Extras if time remains: 3D Moon view, mission-day countdown | |
 
 ## How the code is organised
@@ -38,6 +38,9 @@ js/chart.js         timeline chart (canvas)
 js/timeline-view.js Timeline & scores view
 js/compare-view.js  Compare view (up to four sites/dates)
 js/finder-view.js   Best-window finder view
+js/learn-view.js    Learn view: guided tour and glossary list
+js/glossary.js      glossary words and tap-to-explain tooltips
+js/export.js        CSV / PNG download and share-link helpers
 data/               small files generated from NASA LOLA data + the year simulation
 js/ui.js            small helpers (formatting, canvas sizing, colours)
 vendor/             third-party library committed to the repo (astronomy-engine, MIT)

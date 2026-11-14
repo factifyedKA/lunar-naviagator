@@ -242,6 +242,31 @@ td.best { font-weight: 800; color: #7fe0c2; }
 .btn.small { min-height: 36px; padding: 0 10px; font-size: 0.85rem; }
 input:disabled { opacity: 0.4; }
 
+/* ---------- learn mode, glossary, simple/expert ---------- */
+.top-tools { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+.mode-simple .expert-only { display: none !important; }
+.term {
+  background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: help;
+  text-decoration: underline dotted var(--accent); text-underline-offset: 3px;
+}
+.term-pop {
+  position: fixed; z-index: 40; background: #f5f7fb; color: #0b0f1a; border-radius: 10px; padding: 10px 12px;
+  font-size: 0.92rem; line-height: 1.4; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+}
+.learn-card { display: flex; flex-direction: column; gap: 12px; }
+.learn-title { font-size: 1.5rem !important; }
+.learn-body { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; align-items: center; }
+.learn-text { display: grid; gap: 10px; font-size: 1.08rem; }
+.learn-art svg { width: 100%; height: auto; background: #0a0f1e; border: 1px solid var(--line); border-radius: 10px; }
+.learn-art text { fill: #e8eef8; font: 11px system-ui, sans-serif; }
+.learn-nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.learn-dots { display: flex; gap: 8px; }
+.dot-step { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.dot-step.on { background: var(--accent); }
+.glossary { display: grid; grid-template-columns: minmax(120px, 220px) minmax(0, 1fr); gap: 8px 16px; margin: 10px 0 0; }
+.glossary dt { font-weight: 700; }
+.glossary dd { margin: 0; color: var(--dim); }
+
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {
   .layout { grid-template-columns: 260px minmax(0, 1fr); }
@@ -255,6 +280,10 @@ input:disabled { opacity: 0.4; }
   .site-list { flex-direction: row; overflow-x: auto; padding-bottom: 6px; }
   .site-list li { flex: none; }
   .brand h1 { font-size: 1rem; }
+  .learn-body { grid-template-columns: minmax(0, 1fr); }
+  .glossary { grid-template-columns: minmax(0, 1fr); }
+  .glossary dd { margin-bottom: 8px; }
+  .top-tools { margin-left: 0; }
   .weight-row { grid-template-columns: minmax(0, 1fr) 24px; }
   .weight-row label { grid-column: 1 / -1; }
 }

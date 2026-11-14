@@ -1,13 +1,16 @@
 // Starts the app and connects the controls to the views.
 
 import { SITES, GROUPS, CUSTOM_ID, LAT_MIN, LAT_MAX, getSite } from './sites.js';
-import { getState, setState, subscribe, initStateFromUrl, HOUR, DAY, WINDOW_DAYS } from './state.js';
+import { getState, setState, subscribe, initStateFromUrl, currentUrl, HOUR, DAY, WINDOW_DAYS } from './state.js';
 import { moonFrame, skyAt, subEarthPoint, subSolarPoint, meanEarthAzimuth } from './astro.js';
 import { visibility } from './metrics.js';
 import { data, loadData, siteModel, horizonNote } from './model.js';
 import { initTimelineView, renderTimelineView } from './timeline-view.js';
 import { initCompareView, renderCompareView } from './compare-view.js';
 import { initFinderView, renderFinderView } from './finder-view.js';
+import { initLearnView, renderLearnView } from './learn-view.js';
+import { glossarize, initGlossaryTooltips } from './glossary.js';
+import { downloadPng, shareLink, slug } from './export.js';
 import { createMap, ZOOMS } from './map.js';
 import { createSky } from './horizon.js';
 import { $, el, clamp, fmtLat, fmtLon, fmtSigned, fmtDateTime, fmtDate, compass } from './ui.js';
@@ -17,6 +20,7 @@ const VIEWS = [
   { id: 'timeline', label: 'Timeline & scores' },
   { id: 'compare', label: 'Compare' },
   { id: 'finder', label: 'Best window' },
+  { id: 'learn', label: 'Learn' },
   { id: 'about', label: 'About' },
 ];
 const MINUTE = 60e3;
@@ -87,6 +91,21 @@ function wireControls() {
     placeCustom(lat, lon);
   });
   $('#hz').addEventListener('input', (ev) => setState({ hz: Number(ev.target.value) }));
+  $('#mode-simple').addEventListener('click', () => setState({ mode: 'simple' }));
+  $('#mode-expert').addEventListener('click', () => setState({ mode: 'expert' }));
+  $('#share-btn').addEventListener('click', () => shareLink(currentUrl(), toast));
+  $('#map-png').addEventListener('click', () => {
+    const s = getState();
+    const site = getSite(s.site, s.lat, s.lon);
+    downloadPng(`moon-south-pole-map-${slug(site.name)}.png`, `South-pole site map · ${site.name} · ${fmtDateTime(s.t)}`,
+      [{ canvas: $('#map') }], 'Arrows: direction of the Sun and the Earth.');
+  });
+  $('#sky-png').addEventListener('click', () => {
+    const s = getState();
+    const site = getSite(s.site, s.lat, s.lon);
+    downloadPng(`horizon-view-${slug(site.name)}.png`, `Horizon view from ${site.name} · ${fmtDateTime(s.t)}`,
+      [{ canvas: $('#sky') }], `${$('#sun-line').textContent}; ${$('#earth-line').textContent}.`);
+  });
   $('#hm-terrain').addEventListener('click', () => setState({ hm: 'terrain' }));
   $('#hm-flat').addEventListener('click', () => setState({ hm: 'flat' }));
   $('#emin').addEventListener('input', (ev) => setState({ emin: Number(ev.target.value) }));
@@ -180,12 +199,26 @@ function setChip(node, kind, text) {
 function requestRender() {
   if (frameRequested) return;
   frameRequested = true;
-  requestAnimationFrame(() => { frameRequested = false; render(); });
+  requestAnimationFrame(() => { frameRequested = false; render(); glossarizeCaptions(); });
+}
+
+/** Adds glossary tooltips to chart captions whose text has changed (skipped during time-lapse). */
+function glossarizeCaptions() {
+  if (getState().playing) return;
+  for (const node of document.querySelectorAll('.view:not([hidden]) .caption')) {
+    if (node.dataset.seen === node.textContent) continue;
+    glossarize(node);
+    node.dataset.seen = node.textContent;
+  }
 }
 
 function render() {
   const s = getState();
   const site = getSite(s.site, s.lat, s.lon);
+
+  document.body.classList.toggle('mode-simple', s.mode !== 'expert');
+  $('#mode-simple').setAttribute('aria-pressed', String(s.mode !== 'expert'));
+  $('#mode-expert').setAttribute('aria-pressed', String(s.mode === 'expert'));
 
   // tabs and views
   const view = VIEWS.some((v) => v.id === s.view) ? s.view : 'explore';
@@ -241,6 +274,7 @@ function render() {
   if (view === 'timeline') { renderTimelineView(); return; }
   if (view === 'compare') { renderCompareView(); return; }
   if (view === 'finder') { renderFinderView(); return; }
+  if (view === 'learn') { renderLearnView(); return; }
   if (view !== 'explore') return;
 
   // ---- the science: where are the Sun and the Earth right now? ----
@@ -324,6 +358,9 @@ async function start() {
   initTimelineView(requestRender);
   initCompareView(requestRender);
   initFinderView(requestRender);
+  initLearnView(requestRender, { play: () => setPlaying(true), glossarize });
+  initGlossaryTooltips();
+  for (const node of document.querySelectorAll('.hint p, .prose p, .prose li, .note')) glossarize(node);
   subscribe(requestRender);
   render();                                   // show the page at once…
   const ok = await loadData(requestRender);   // …then add terrain and pre-computed results

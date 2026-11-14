@@ -23,6 +23,13 @@
         <p class="tagline">Moon south pole · Sun, Earth and the horizon</p>
       </div>
     </div>
+    <div class="top-tools">
+      <div class="seg" role="group" aria-label="Level of detail">
+        <button type="button" class="btn" id="mode-simple" aria-pressed="true">Simple</button>
+        <button type="button" class="btn" id="mode-expert" aria-pressed="false">Expert</button>
+      </div>
+      <button type="button" class="btn" id="share-btn">Share link</button>
+    </div>
     <nav class="tabs" id="tabs" aria-label="Views"></nav>
   </header>
 
@@ -37,7 +44,7 @@
       <section>
         <h2><span class="step">2</span> Or place your own point</h2>
         <button type="button" class="btn wide" id="drop-btn" aria-pressed="false">Drop a pin on the map</button>
-        <form class="coords" id="custom-form" novalidate>
+        <form class="coords expert-only" id="custom-form" novalidate>
           <label>Latitude (°, south is negative)
             <input type="number" id="custom-lat" min="-90" max="-80" step="0.01" inputmode="decimal">
           </label>
@@ -49,7 +56,7 @@
         <p class="note">Points must be between 80°S and 90°S.</p>
       </section>
 
-      <section>
+      <section class="expert-only">
         <h2><span class="step">3</span> Horizon model</h2>
         <div class="seg wide" role="group" aria-label="Horizon model">
           <button type="button" class="btn" id="hm-terrain" aria-pressed="true">Real terrain</button>
@@ -64,7 +71,7 @@
         </div>
       </section>
 
-      <section>
+      <section class="expert-only">
         <h2><span class="step">4</span> Radio link margin</h2>
         <label class="field" for="emin"><span>Earth must be at least <output id="emin-out" for="emin">0°</output> above the horizon</span></label>
         <input type="range" id="emin" min="0" max="10" step="0.5" value="0">
@@ -90,7 +97,8 @@
           <div class="card map-card">
             <div class="card-head">
               <h3>South-pole site map</h3>
-              <div class="zoom" role="group" aria-label="Map zoom">
+              <div class="zoom" role="group" aria-label="Map tools">
+                <button type="button" class="btn small" id="map-png">Save PNG</button>
                 <button type="button" class="btn icon" id="zoom-out" aria-label="Zoom out">−</button>
                 <button type="button" class="btn icon" id="zoom-in" aria-label="Zoom in">+</button>
               </div>
@@ -108,7 +116,7 @@
               <p class="coords-line" id="site-coords"></p>
               <p id="site-blurb"></p>
               <p class="badge-line" id="site-approx"></p>
-              <p class="badge-line" id="site-terrain"></p>
+              <p class="badge-line expert-only" id="site-terrain"></p>
             </div>
 
             <div class="card now-card">
@@ -117,7 +125,7 @@
                 <span class="dot sun" aria-hidden="true"></span>
                 <div>
                   <p class="ro-main" id="sun-line"></p>
-                  <p class="ro-sub" id="sun-sub"></p>
+                  <p class="ro-sub expert-only" id="sun-sub"></p>
                   <p class="chip" id="sun-chip"></p>
                 </div>
               </div>
@@ -125,7 +133,7 @@
                 <span class="dot earth" aria-hidden="true"></span>
                 <div>
                   <p class="ro-main" id="earth-line"></p>
-                  <p class="ro-sub" id="earth-sub"></p>
+                  <p class="ro-sub expert-only" id="earth-sub"></p>
                   <p class="chip" id="earth-chip"></p>
                 </div>
               </div>
@@ -136,6 +144,7 @@
         <div class="card sky-card">
           <div class="card-head">
             <h3>Horizon view from <span id="sky-site"></span></h3>
+            <button type="button" class="btn small" id="sky-png">Save PNG</button>
           </div>
           <details class="hint small">
             <summary>What am I looking at?</summary>
@@ -179,7 +188,8 @@
         </details>
 
         <div class="card">
-          <div class="card-head"><h3>Power and communication timeline · <span id="tl-site"></span></h3></div>
+          <div class="card-head"><h3>Power and communication timeline · <span id="tl-site"></span></h3>
+            <div class="zoom"><button type="button" class="btn small" id="tl-csv">Download CSV</button><button type="button" class="btn small" id="tl-png">Save PNG</button></div></div>
           <div class="timebar">
             <label class="field time-field">Start date (UTC)
               <input type="date" id="tl-start" min="1970-01-02" max="2098-12-31">
@@ -233,7 +243,7 @@
         </div>
 
         <div class="card" id="rank-card">
-          <h3>Whole-year ranking of all sites</h3>
+          <div class="card-head"><h3>Whole-year ranking of all sites</h3><button type="button" class="btn small" id="rank-csv">Download CSV</button></div>
           <div class="table-wrap">
             <table id="rank-table">
               <thead><tr><th scope="col">#</th><th scope="col">Site</th><th scope="col">Score</th><th scope="col">Sunlit</th>
@@ -267,13 +277,13 @@
           </div>
         </div>
         <div class="card">
-          <h3>Timelines side by side</h3>
+          <div class="card-head"><h3>Timelines side by side</h3><button type="button" class="btn small" id="cmp-png">Save PNG</button></div>
           <p id="cmp-empty" class="note" hidden>Choose at least one site above.</p>
           <div id="cmp-charts"></div>
           <p class="caption" id="cmp-caption"></p>
         </div>
         <div class="card" id="cmp-table-card">
-          <h3>Numbers side by side</h3>
+          <div class="card-head"><h3>Numbers side by side</h3><button type="button" class="btn small" id="cmp-csv">Download CSV</button></div>
           <div class="table-wrap">
             <table id="cmp-table"><thead><tr></tr></thead><tbody></tbody></table>
           </div>
@@ -316,7 +326,7 @@
         <p class="busy-line" id="fw-busy" role="status">Searching every start date…</p>
         <div id="fw-results" class="stack" hidden>
           <div class="card">
-            <h3>Best start dates, ranked</h3>
+            <div class="card-head"><h3>Best start dates, ranked</h3><button type="button" class="btn small" id="fw-csv">Download CSV</button></div>
             <p class="answer" id="fw-answer"></p>
             <div class="table-wrap">
               <table id="fw-table">
@@ -328,10 +338,34 @@
             <p class="caption" id="fw-table-caption"></p>
           </div>
           <div class="card">
-            <h3 id="fw-chart-title">Score by start date</h3>
+            <div class="card-head"><h3 id="fw-chart-title">Score by start date</h3><button type="button" class="btn small" id="fw-png">Save PNG</button></div>
             <canvas id="fw-chart" class="chart score-chart" role="img" aria-label="Score by start date"></canvas>
             <p class="caption" id="fw-chart-caption"></p>
           </div>
+        </div>
+      </section>
+
+      <!-- LEARN VIEW -->
+      <section class="view" id="view-learn" aria-labelledby="learn-heading" hidden>
+        <h2 class="visually-hidden" id="learn-heading">Learn</h2>
+        <div class="card learn-card">
+          <p class="eyebrow" id="learn-count"></p>
+          <h3 id="learn-title" class="learn-title"></h3>
+          <div class="learn-body">
+            <div id="learn-text" class="learn-text"></div>
+            <div id="learn-art" class="learn-art" data-no-gloss></div>
+          </div>
+          <div class="learn-nav">
+            <button type="button" class="btn" id="learn-back">← Back</button>
+            <div id="learn-dots" class="learn-dots" aria-hidden="true"></div>
+            <button type="button" class="btn" id="learn-next">Next →</button>
+          </div>
+          <button type="button" class="btn primary wide" id="learn-show"></button>
+        </div>
+        <div class="card prose">
+          <h3>Glossary</h3>
+          <p class="caption">Words with a dotted underline anywhere in the tool can be tapped for the same explanations.</p>
+          <dl id="glossary-list" class="glossary" data-no-gloss></dl>
         </div>
       </section>
 

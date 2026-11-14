@@ -7,7 +7,13 @@ export default async function run({ session, base }) {
     await page.goto(base);
     await page.waitForSelector('.site-btn');
     check(await page.locator('.site-btn').count() === 13, '13 sites listed');
+    await page.waitForTimeout(400);
     await shot('1-start');
+    if (await page.locator('#mode-expert').count()) {
+      check(!(await page.isVisible('#custom-form')), 'Simple mode hides expert controls');
+      await page.click('#mode-expert');
+      check(await page.isVisible('#custom-form'), 'Expert mode shows them');
+    }
     // pick a site from the list
     await page.click('.site-btn[data-site="nobile-1"]');
     check((await page.textContent('#site-name')).includes('Nobile Rim 1'), 'site card follows list');
@@ -43,6 +49,7 @@ export default async function run({ session, base }) {
     if (await page.locator('#play').count()) await skySteps(page, shot, check);
     if (await page.locator('#tl-chart').count()) await timelineSteps(page, shot, check);
     if (await page.locator('#cmp-table').count()) await planSteps(page, shot, check);
+    if (await page.locator('#learn-show').count()) await learnSteps(page, shot, check);
     // about tab
     await page.click('.tab[data-view="about"]');
     check(await page.isVisible('#view-about'), 'about view opens');
@@ -178,4 +185,50 @@ async function planSteps(page, shot, check) {
   await page.locator('#fw-table tbody tr button').first().click();
   await page.waitForTimeout(400);
   check(await page.isVisible('#view-timeline'), '"Open timeline" jumps to the timeline');
+}
+
+// Milestone 5: learn mode, glossary, export, share
+async function learnSteps(page, shot, check) {
+  await page.click('.tab[data-view="learn"]');
+  check((await page.textContent('#learn-count')).includes('Step 1 of 6'), 'tour starts at step 1');
+  check(await page.locator('#glossary-list dt').count() >= 15, 'glossary is listed');
+  await page.click('#learn-next'); await page.click('#learn-next'); await page.click('#learn-next');
+  check((await page.textContent('#learn-title')).includes('never reaches'), 'tour step 4 is about shadowed craters');
+  check(await page.locator('#learn-art svg').count() === 1, 'step has a diagram');
+  const term = page.locator('#learn-text .term').first();
+  await term.click();
+  check(await page.isVisible('#term-pop'), 'tapping a glossary word opens its explanation');
+  await shot('12-learn');
+  await page.keyboard.press('Escape');
+  check(!(await page.isVisible('#term-pop')), 'Escape closes the explanation');
+  await page.click('#learn-show');
+  await page.waitForFunction(() => /^0\.0%/.test(document.querySelector('#tl-tiles .tile-value')?.textContent || ''), null, { timeout: 25000 })
+    .catch(() => check(false, 'Shackleton floor shows 0% sunlight'));
+  await shot('13-psr-timeline');
+  // exports
+  const grab = async (selector, ext) => {
+    const [d] = await Promise.all([page.waitForEvent('download', { timeout: 8000 }), page.click(selector)]);
+    check(d.suggestedFilename().endsWith(ext), `${selector} downloads a ${ext} file (${d.suggestedFilename()})`);
+    return d;
+  };
+  const csv = await grab('#tl-csv', '.csv');
+  const { readFileSync } = await import('node:fs');
+  const text = readFileSync(await csv.path(), 'utf8');
+  check(text.startsWith('# Lunar Landing Site Navigator') && text.includes('time_utc,') && text.split('\n').length > 2000, 'timeline CSV has metadata, a header and hourly rows');
+  await grab('#tl-png', '.png');
+  await grab('#rank-csv', '.csv');
+  await page.click('.tab[data-view="compare"]');
+  await page.waitForFunction(() => document.querySelectorAll('#cmp-table tbody tr').length === 6, null, { timeout: 15000 });
+  await grab('#cmp-csv', '.csv');
+  await grab('#cmp-png', '.png');
+  await page.click('.tab[data-view="finder"]');
+  await page.waitForFunction(() => document.querySelectorAll('#fw-table tbody tr').length > 0, null, { timeout: 25000 });
+  await grab('#fw-csv', '.csv');
+  await grab('#fw-png', '.png');
+  await page.click('.tab[data-view="explore"]');
+  await grab('#map-png', '.png');
+  await grab('#sky-png', '.png');
+  await page.click('#share-btn');
+  check(await page.isVisible('#toast'), 'share button gives feedback');
+  check(page.url().includes('m=x'), 'expert mode is kept in the link');
 }

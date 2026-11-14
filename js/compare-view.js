@@ -8,6 +8,7 @@ import { seriesJob } from './compute.js';
 import { siteModel, modelKey, horizonNote } from './model.js';
 import { drawTimeline, timelineHeight } from './chart.js';
 import { $, el, fmtDate } from './ui.js';
+import { downloadCsv, downloadPng } from './export.js';
 
 let requestRender = () => {};
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -41,6 +42,18 @@ export function initCompareView(onChange) {
     ]));
   });
   $('#cmp-days').addEventListener('change', (ev) => setState({ rd: Number(ev.target.value) }));
+  $('#cmp-png').addEventListener('click', () => {
+    const blocks = [...$('#cmp-charts').children].filter((b) => !b.children[1].hidden)
+      .map((b) => ({ canvas: b.children[1], label: b.children[0].textContent }));
+    if (blocks.length) downloadPng('compare-timelines.png', 'Site comparison · power and communication timelines', blocks,
+      'Yellow = Sun, blue = Earth, green = both.');
+  });
+  $('#cmp-csv').addEventListener('click', () => {
+    const s = getState();
+    const rows = [...$('#cmp-table').querySelectorAll('tr')].map((tr) => [...tr.children].map((c) => c.textContent.replace('★ ', '').trim()));
+    if (rows.length > 1) downloadCsv('compare-sites.csv', ['Lunar Landing Site Navigator - comparison',
+      `length ${s.rd} days; Earth minimum elevation ${s.emin} deg; horizon model ${s.hm}; score weights (sun,dark,earth,gap,both): ${s.w.join(' ')}`], rows);
+  });
 }
 
 function ensure(key, model, start, s) {
