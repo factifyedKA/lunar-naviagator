@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lunar Landing Site Navigator</title>
+  <meta name="description" content="Compare Moon south-pole landing sites and dates: see where the Sun and the Earth sit relative to the horizon for solar power and direct-to-Earth communication.">
+  <meta name="theme-color" content="#0b0f1a">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23cfd6e4'/%3E%3Ccircle cx='11' cy='12' r='4' fill='%239aa3b5'/%3E%3Ccircle cx='20' cy='20' r='5' fill='%239aa3b5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-icon" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="16" cy="16" r="14" fill="#cfd6e4"/><circle cx="11" cy="12" r="4" fill="#9aa3b5"/>
+        <circle cx="20" cy="20" r="5" fill="#9aa3b5"/><circle cx="21" cy="9" r="2" fill="#9aa3b5"/>
+      </svg>
+      <div>
+        <h1>Lunar Landing Site Navigator</h1>
+        <p class="tagline">Moon south pole · Sun, Earth and the horizon</p>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Views"></nav>
+  </header>
+
+  <div class="layout">
+    <!-- LEFT CONTROL PANEL -->
+    <aside class="panel" aria-label="Controls">
+      <section>
+        <h2><span class="step">1</span> Choose a landing site</h2>
+        <div id="site-list"></div>
+      </section>
+
+      <section>
+        <h2><span class="step">2</span> Or place your own point</h2>
+        <button type="button" class="btn wide" id="drop-btn" aria-pressed="false">Drop a pin on the map</button>
+        <form class="coords" id="custom-form" novalidate>
+          <label>Latitude (°, south is negative)
+            <input type="number" id="custom-lat" min="-90" max="-80" step="0.01" inputmode="decimal">
+          </label>
+          <label>Longitude (°, east is positive)
+            <input type="number" id="custom-lon" min="-180" max="360" step="0.01" inputmode="decimal">
+          </label>
+          <button type="submit" class="btn">Go to point</button>
+        </form>
+        <p class="note">Points must be between 80°S and 90°S.</p>
+      </section>
+    </aside>
+
+    <!-- MAIN AREA -->
+    <main id="main" tabindex="-1">
+      <!-- EXPLORE VIEW -->
+      <section class="view" id="view-explore" aria-labelledby="explore-title">
+        <h2 class="visually-hidden" id="explore-title">Explore</h2>
+        <details class="hint" open>
+          <summary>What am I looking at?</summary>
+          <p>You are looking <strong>down on the Moon's south pole</strong>. The side facing Earth is at the top.
+            Each numbered dot is a place NASA is studying for an astronaut landing.
+            <strong>Tap a dot</strong> (or a name in the list) to choose it.</p>
+        </details>
+
+        <div class="explore-grid">
+          <div class="card map-card">
+            <div class="card-head">
+              <h3>South-pole site map</h3>
+              <div class="zoom" role="group" aria-label="Map zoom">
+                <button type="button" class="btn icon" id="zoom-out" aria-label="Zoom out">−</button>
+                <button type="button" class="btn icon" id="zoom-in" aria-label="Zoom in">+</button>
+              </div>
+            </div>
+            <div class="map-wrap">
+              <canvas id="map" role="img" aria-label="Map of the Moon's south pole with landing sites"></canvas>
+            </div>
+            <p class="caption" id="map-caption">Polar map from 80°S to the pole. Grey rings are named craters (schematic outlines, not a photo).</p>
+          </div>
+
+          <div class="card site-card" aria-live="polite">
+            <p class="eyebrow" id="site-group"></p>
+            <h3 id="site-name"></h3>
+            <p class="coords-line" id="site-coords"></p>
+            <p id="site-blurb"></p>
+            <p class="badge-line" id="site-approx"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABOUT VIEW (expanded in a later milestone) -->
+      <section class="view" id="view-about" aria-labelledby="about-title" hidden>
+        <div class="card prose">
+          <h2 id="about-title">About this tool</h2>
+          <p>The Lunar Landing Site Navigator helps mission planners, educators and the public compare landing
+            sites near the Moon's south pole by showing where the Sun and the Earth are relative to the horizon.</p>
+          <h3>Honest limitations (work in progress)</h3>
+          <ul>
+            <li><strong>Site positions are approximate.</strong> NASA published the candidate regions as named areas
+              about 15 km across; our markers are placed near their centres and labelled “approximate”.</li>
+            <li><strong>Crater outlines are schematic</strong> circles from catalogue positions and sizes, not imagery.</li>
+            <li><strong>Flat horizon.</strong> Real mountains and crater rims are not modelled yet. You can raise or
+              lower the “local horizon height” to explore their effect.</li>
+          </ul>
+          <p>Full details, data credits and references will be added here before submission.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+  <noscript><p class="noscript">This tool needs JavaScript. Please enable it and reload the page.</p></noscript>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
