@@ -85,3 +85,18 @@ IAU Gazetteer of Planetary Nomenclature) for orientation only. They are not imag
 - Sites are numbered on the map; the same numbers are in the list (avoids label clutter).
 - The time slider covers a 30-day window (about one lunar day) in 1-hour steps.
 - "Sun in view" uses the visible fraction of the Sun's disc, not just its centre.
+
+## Milestone 2 additions
+- **Eclipses:** when the Earth's disc overlaps the Sun's disc in the site's sky (a lunar
+  eclipse seen from the Moon) the app says so instead of reporting full Sun.
+- **Drawing order / sizes in the horizon view:** discs are drawn at true scale when that
+  is big enough to see and tap, otherwise slightly enlarged (Sun ≥ 5 px, Earth ≥ 7 px
+  radius). This is stated in About.
+- **Time-lapse** pauses automatically when the browser tab is hidden, and the URL is not
+  rewritten on every animation frame (Safari limits how often that may happen).
+- **Tests added (16 total):** cross-check of our IAU-based sub-Earth point against the
+  library's independent libration model (< 0.05°), libration limits, sub-solar latitude
+  limit (±1.6°), polar Sun/Earth elevation limits, synodic-month azimuth cycle, phase
+  angle, and the total lunar eclipse of 3 March 2026 (Earth must cover the Sun).
+- **Speed:** a full year, hourly, for all 13 sites takes about 0.3 s in Node, so the
+  milestone 3 timelines can be computed live as well as pre-computed.

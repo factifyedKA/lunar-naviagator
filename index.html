@@ -48,6 +48,14 @@
         </form>
         <p class="note">Points must be between 80°S and 90°S.</p>
       </section>
+
+      <section>
+        <h2><span class="step">3</span> Local horizon height</h2>
+        <label class="field" for="hz">Hills or dips around the site: <output id="hz-out" for="hz">0.0°</output></label>
+        <input type="range" id="hz" min="-3" max="5" step="0.1" value="0">
+        <p class="note"><strong>Simplification:</strong> this tool uses a flat horizon, not real terrain.
+          Raise it to imitate surrounding hills; lower it to imitate standing on a peak.</p>
+      </section>
     </aside>
 
     <!-- MAIN AREA -->
@@ -59,7 +67,9 @@
           <summary>What am I looking at?</summary>
           <p>You are looking <strong>down on the Moon's south pole</strong>. The side facing Earth is at the top.
             Each numbered dot is a place NASA is studying for an astronaut landing.
-            <strong>Tap a dot</strong> (or a name in the list) to choose it.</p>
+            <strong>Tap a dot</strong> (or a name in the list) to choose it. The <strong>horizon view</strong> below
+            then shows the sky from that place: the Sun (yellow) and the Earth (blue). Press <strong>Play</strong>
+            to watch them move.</p>
         </details>
 
         <div class="explore-grid">
@@ -77,13 +87,68 @@
             <p class="caption" id="map-caption">Polar map from 80°S to the pole. Grey rings are named craters (schematic outlines, not a photo).</p>
           </div>
 
-          <div class="card site-card" aria-live="polite">
-            <p class="eyebrow" id="site-group"></p>
-            <h3 id="site-name"></h3>
-            <p class="coords-line" id="site-coords"></p>
-            <p id="site-blurb"></p>
-            <p class="badge-line" id="site-approx"></p>
+          <div class="side-col">
+            <div class="card site-card">
+              <p class="eyebrow" id="site-group"></p>
+              <h3 id="site-name"></h3>
+              <p class="coords-line" id="site-coords"></p>
+              <p id="site-blurb"></p>
+              <p class="badge-line" id="site-approx"></p>
+            </div>
+
+            <div class="card now-card">
+              <p class="eyebrow">The sky right now · <span id="now-time"></span></p>
+              <div class="readout">
+                <span class="dot sun" aria-hidden="true"></span>
+                <div>
+                  <p class="ro-main" id="sun-line"></p>
+                  <p class="ro-sub" id="sun-sub"></p>
+                  <p class="chip" id="sun-chip"></p>
+                </div>
+              </div>
+              <div class="readout">
+                <span class="dot earth" aria-hidden="true"></span>
+                <div>
+                  <p class="ro-main" id="earth-line"></p>
+                  <p class="ro-sub" id="earth-sub"></p>
+                  <p class="chip" id="earth-chip"></p>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div class="card sky-card">
+          <div class="card-head">
+            <h3>Horizon view from <span id="sky-site"></span></h3>
+          </div>
+          <details class="hint small">
+            <summary>What am I looking at?</summary>
+            <p>Imagine standing at the site and turning all the way around: this is that full circle, unrolled flat.
+              The grey band is the ground. The <strong>yellow dot is the Sun</strong> and the
+              <strong>blue dot is the Earth</strong>; a hollow dot means it is hidden below the horizon.
+              Dotted lines show where each one travels during the 30 days of the slider. Near the pole the Sun never
+              climbs high — it circles the horizon about once a month.</p>
+          </details>
+          <div class="sky-wrap">
+            <canvas id="sky" role="img" aria-label="Horizon view"></canvas>
+          </div>
+          <div class="timebar">
+            <button type="button" class="btn" id="step-back" aria-label="Back one day">−1 day</button>
+            <button type="button" class="btn primary" id="play" aria-pressed="false">▶ Play</button>
+            <button type="button" class="btn" id="step-fwd" aria-label="Forward one day">+1 day</button>
+            <div class="seg" role="group" aria-label="Time-lapse speed">
+              <button type="button" class="btn" id="speed-hour" aria-pressed="true">1 hour / sec</button>
+              <button type="button" class="btn" id="speed-day" aria-pressed="false">1 day / sec</button>
+            </div>
+            <label class="field time-field">Date and time (UTC)
+              <input type="datetime-local" id="time-input" min="1970-01-02T00:00" max="2099-12-31T00:00">
+            </label>
+            <button type="button" class="btn" id="now-btn">Now</button>
+          </div>
+          <input type="range" id="time-slider" min="0" max="720" step="1" value="0" aria-label="Time within the 30-day window, in hours">
+          <div class="slider-ends"><span id="win-start"></span><span id="win-end"></span></div>
+          <p class="caption" id="sky-caption"></p>
         </div>
       </section>
 
@@ -100,7 +165,15 @@
             <li><strong>Crater outlines are schematic</strong> circles from catalogue positions and sizes, not imagery.</li>
             <li><strong>Flat horizon.</strong> Real mountains and crater rims are not modelled yet. You can raise or
               lower the “local horizon height” to explore their effect.</li>
+            <li><strong>Map lighting is for a smooth ball.</strong> The day/night shading on the map ignores terrain
+              shadows.</li>
+            <li><strong>Sun and Earth sizes</strong> in the horizon view are drawn slightly enlarged so they are easy
+              to see and tap.</li>
           </ul>
+          <h3>How positions are calculated</h3>
+          <p>Sun and Moon positions come from the open-source <em>astronomy-engine</em> library (checked by its author
+            against NASA JPL data). The Moon's tilt and wobble (libration) use the International Astronomical Union
+            rotation model. Times are UTC.</p>
           <p>Full details, data credits and references will be added here before submission.</p>
         </div>
       </section>
