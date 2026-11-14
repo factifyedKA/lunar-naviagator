@@ -172,3 +172,33 @@ fallback was replaced by real terrain. Flat mode is kept as a clearly labelled o
 - **PNG files** are composed on the dark background with a title and a data-credit line.
 - **Share link** copies the URL (which holds the full state); if the browser refuses
   clipboard access it opens the system share sheet instead.
+
+## Milestone 6 — validation, About, countdown
+- **Validation runs live in the browser** (22 checks) and the same references are tested
+  in Node (`tests/validation.test.js`).
+  1. *JPL Horizons:* 110 Sun/Earth azimuth-elevation values for five surface points,
+     2026-12-01 to 2028-12-01 every 73 days (`tools/fetch-horizons.mjs` →
+     `data/validation-horizons.json`). Largest difference: 0.007° azimuth (on the sky),
+     0.003° elevation. Pass limit 0.05°.
+  2. *Known physics:* independent libration model, libration limits, sub-solar latitude,
+     polar Sun limit, synodic month, total lunar eclipse of 3 March 2026.
+  3. *NASA LOLA illumination maps* (`AVGVISIB_65S_240M_201608[_EARTH]`, 18.6-year hourly
+     averages at the surface): values read at our 12 terrain viewpoints with HTTP range
+     requests (`tools/fetch-nasa-illumination.mjs` → `data/validation-nasa-illumination.json`).
+     Our 2027 results differ by 2.8 points on average for sunlight (worst 7.7) and 1.9 for
+     Earth visibility (worst 4.9). Pass limit 10 points, because we compare one year with
+     18.6 years and a 2 m mast with the bare surface. For this comparison only, the Earth
+     counts as visible while any part of its disc shows (centre ≥ −0.95°), to match NASA's
+     definition. The exact South Pole is excluded: it lies on the corner of four map pixels.
+     The map label says CENTER_LONGITUDE = 180, but the grid is laid out like the elevation
+     maps (0° up); this was confirmed with crater floors (0%) and ridges (~90%).
+  4. *Permanently shadowed regions:* four crater floors are 0% sunlit in NASA's map and in
+     our 2027 calculation.
+- **Countdown extra:** the "sky right now" card says how long the sunlight / Earth contact
+  lasts or when it returns (looks ahead up to 60 days, to the minute). Not shown during
+  time-lapse because it is too costly per animation frame.
+- **3D Moon view:** not built — the time was better spent on real terrain and validation.
+- **Team name on the About page** comes from `js/team.js`; placeholders in square brackets
+  are not displayed.
+- **Publishing:** the build machine cannot switch on GitHub Pages; the owner does this in
+  the repository settings (steps in README.md).

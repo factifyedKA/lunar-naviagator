@@ -127,6 +127,7 @@
                   <p class="ro-main" id="sun-line"></p>
                   <p class="ro-sub expert-only" id="sun-sub"></p>
                   <p class="chip" id="sun-chip"></p>
+                  <p class="ro-next" id="sun-next"></p>
                 </div>
               </div>
               <div class="readout">
@@ -135,6 +136,7 @@
                   <p class="ro-main" id="earth-line"></p>
                   <p class="ro-sub expert-only" id="earth-sub"></p>
                   <p class="chip" id="earth-chip"></p>
+                  <p class="ro-next" id="earth-next"></p>
                 </div>
               </div>
             </div>
@@ -369,33 +371,138 @@
         </div>
       </section>
 
-      <!-- ABOUT VIEW (expanded in a later milestone) -->
+      <!-- VALIDATION VIEW -->
+      <section class="view" id="view-validation" aria-labelledby="validation-title" hidden>
+        <h2 class="visually-hidden" id="validation-title">Validation</h2>
+        <details class="hint" open>
+          <summary>What am I looking at?</summary>
+          <p>Can you trust this tool? This page <strong>tests it live, in your browser, every time you open it</strong>.
+            It compares our numbers with NASA reference values and with facts about the Moon that must be true,
+            and shows a pass or fail for each test.</p>
+        </details>
+        <div class="card">
+          <h3>Automated checks</h3>
+          <p id="val-summary" class="val-summary" role="status">Waiting for the terrain data…</p>
+          <div id="val-list"></div>
+        </div>
+        <div class="card">
+          <h3>Sunlight and Earth visibility: this tool against NASA’s LOLA maps</h3>
+          <div class="table-wrap">
+            <table id="val-terrain">
+              <thead><tr><th scope="col">Site viewpoint</th><th scope="col">Sunlit, NASA</th><th scope="col">Sunlit, ours</th><th scope="col">Diff.</th>
+                <th scope="col">Earth visible, NASA</th><th scope="col">Earth visible, ours</th><th scope="col">Diff.</th><th scope="col">Result</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="caption" id="val-terrain-note"></p>
+        </div>
+        <div class="card">
+          <h3>Sun and Earth positions: this tool against NASA JPL Horizons</h3>
+          <details class="why">
+            <summary>Show all 110 comparisons</summary>
+            <div class="table-wrap">
+              <table id="val-horizons">
+                <thead><tr><th scope="col">Point</th><th scope="col">Body</th><th scope="col">Date (00:00 UTC)</th><th scope="col">Azimuth, JPL (°)</th><th scope="col">Azimuth, ours (°)</th>
+                  <th scope="col">Elevation, JPL (°)</th><th scope="col">Elevation, ours (°)</th><th scope="col">Result</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </details>
+          <p class="caption" id="val-horizons-note"></p>
+        </div>
+      </section>
+
+      <!-- ABOUT VIEW -->
       <section class="view" id="view-about" aria-labelledby="about-title" hidden>
         <div class="card prose">
-          <h2 id="about-title">About this tool</h2>
-          <p>The Lunar Landing Site Navigator helps mission planners, educators and the public compare landing
-            sites near the Moon's south pole by showing where the Sun and the Earth are relative to the horizon.</p>
-          <h3>Honest limitations (work in progress)</h3>
+          <h2 id="about-title">About the Lunar Landing Site Navigator</h2>
+          <p id="about-team" hidden></p>
+          <p>Built for the <strong>NASA Space Apps Challenge 2026</strong>, challenge “Lunar Landing Site Navigator”.</p>
+
+          <h3>Purpose</h3>
+          <p>Missions to the Moon’s south pole live or die by two things: <strong>sunlight</strong> for power and a clear
+            view of the <strong>Earth</strong> for direct radio contact. Both depend on the place, the date and the
+            landscape. This tool lets mission planners, educators and the public compare landing sites and dates in
+            seconds, with no installation and no login.</p>
+
+          <h3>How it works</h3>
+          <ol>
+            <li><strong>Where are the Sun and the Earth?</strong> Positions of the Sun and the Moon come from the
+              open-source <em>astronomy-engine</em> library, which its author verifies against NASA JPL data.</li>
+            <li><strong>How is the Moon turned?</strong> The Moon’s tilt, spin and monthly wobble (libration) follow
+              the rotation model of the International Astronomical Union (IAU).</li>
+            <li><strong>What does the site see?</strong> For a site’s latitude and longitude we work out how high the
+              Sun and the Earth are above the horizon (elevation) and in which compass direction (azimuth).</li>
+            <li><strong>What does the landscape hide?</strong> A horizon mask made from NASA LRO/LOLA elevation data says
+              how high the real terrain rises in each of 360 directions. The Sun or the Earth counts as visible only
+              above that skyline.</li>
+            <li><strong>Add it up.</strong> Stepping through time hour by hour gives the timelines, the five key
+              numbers, the overall score and the best landing windows.</li>
+          </ol>
+          <p>Everything is calculated in your browser. The heavy work runs in a background worker so the page stays
+            smooth. All times are UTC.</p>
+
+          <h3>NASA data and tools used</h3>
+          <ul>
+            <li><strong>LRO/LOLA elevation model</strong> <code>LDEM_75S_240M</code> (data set LRO-L-LOLA-4-GDR-V1.0, LOLA
+              team, NASA Goddard Space Flight Center, via the NASA PDS Geosciences Node): the terrain horizons of all
+              sites, the 960 m grid for custom points and the shaded-relief map.</li>
+            <li><strong>LOLA average illumination and Earth-visibility maps</strong> <code>AVGVISIB_65S_240M_201608</code>
+              (LOLA team, NASA PDS): reference values on the Validation page.</li>
+            <li><strong>NASA JPL Horizons System</strong>: reference Sun and Earth positions on the Validation page.</li>
+            <li><strong>NASA Artemis III candidate landing regions</strong> (NASA news release, 28 October 2024, and the
+              earlier list of 19 August 2022): the names of the regions shown.</li>
+          </ul>
+          <h3>Other tools and sources</h3>
+          <ul>
+            <li><em>astronomy-engine</em> v2.1.19 by Don Cross (MIT licence), included in this site’s files.</li>
+            <li>IAU Working Group on Cartographic Coordinates and Rotational Elements: lunar rotation model.</li>
+            <li>IAU Gazetteer of Planetary Nomenclature (USGS): crater names; positions are rounded.</li>
+            <li>Okabe–Ito colour-blind-safe palette.</li>
+            <li>No other libraries, no trackers, no cookies, no external requests.</li>
+          </ul>
+
+          <h3>Honest limitations</h3>
           <ul>
             <li><strong>Site positions are approximate.</strong> NASA published the candidate regions as named areas
-              about 15 km across; our markers are placed near their centres and labelled “approximate”.</li>
-            <li><strong>Terrain is real but coarse.</strong> Horizons come from NASA LRO/LOLA elevation data on a
-              240 m grid (960 m for points you place yourself). Boulders, small craters and anything finer than
-              the grid are not seen. The observer stands 2 m above the highest ground within 5 km of each marker
-              (1 km for the LOLA study points).</li>
+              about 15 km across, without centre coordinates in the announcement. Our markers are placed near the
+              named features and are labelled “approximate”; three (Peak near Cabeus B, Mons Mouton Plateau, Slater
+              Plain) could be off by about 1°.</li>
+            <li><strong>Terrain is real but coarse.</strong> Horizons come from a 240 m grid (960 m for points you place
+              yourself). Boulders, small craters and anything finer than the grid are not seen. The observer stands
+              2 m above the highest ground within 5 km of each marker (1 km for the reference points).</li>
             <li><strong>Flat mode</strong> ignores terrain completely; it is there for comparison and teaching.</li>
+            <li><strong>Moon orientation</strong> uses the IAU series, which follows NASA’s high-precision lunar frame to
+              a few thousandths of a degree (see Validation).</li>
             <li><strong>Map lighting is for a smooth ball.</strong> The day/night shading on the map ignores terrain
               shadows; the relief picture uses artificial lighting from the upper left.</li>
             <li><strong>Sun and Earth sizes</strong> in the horizon view are drawn slightly enlarged so they are easy
-              to see and tap.</li>
+              to see and tap. Eclipses by the Earth are handled approximately.</li>
+            <li><strong>Radio link</strong> means only “the Earth is above the local horizon by your chosen margin”. It
+              does not model ground stations, antennas or signal strength.</li>
             <li><strong>Scores are a planning aid,</strong> not a mission decision: they ignore slopes, temperature,
               landing hazards and science value.</li>
+            <li><strong>Time step is one hour.</strong> Events shorter than that can be missed in timelines.</li>
           </ul>
-          <h3>How positions are calculated</h3>
-          <p>Sun and Moon positions come from the open-source <em>astronomy-engine</em> library (checked by its author
-            against NASA JPL data). The Moon's tilt and wobble (libration) use the International Astronomical Union
-            rotation model. Times are UTC.</p>
-          <p>Full details, data credits and references will be added here before submission.</p>
+
+          <h3>Use of AI</h3>
+          <p>Claude, an AI model made by Anthropic, was used to help write the code, tests and documentation of this
+            project. The team made the decisions, tested the tool and checked the results. The numbers shown come from
+            the calculations and NASA data described above, not from an AI; the Validation page tests them against
+            NASA references every time it is opened.</p>
+
+          <h3>References</h3>
+          <ul class="refs">
+            <li>Archinal, B. A., et al. (2011). Report of the IAU Working Group on Cartographic Coordinates and Rotational Elements: 2009. <em>Celestial Mechanics and Dynamical Astronomy</em>, 109, 101–135.</li>
+            <li>Cross, D. <em>Astronomy Engine</em>. https://github.com/cosinekitty/astronomy</li>
+            <li>Giorgini, J. D., et al. (1996). JPL’s On-Line Solar System Data Service. <em>Bulletin of the American Astronomical Society</em>, 28, 1158. https://ssd.jpl.nasa.gov/horizons/</li>
+            <li>Mazarico, E., et al. (2011). Illumination conditions of the lunar polar regions using LOLA topography. <em>Icarus</em>, 211, 1066–1081.</li>
+            <li>NASA (2022). NASA Identifies Candidate Regions for Landing Next Americans on Moon. News release, 19 August 2022.</li>
+            <li>NASA (2024). NASA Provides Update on Artemis III Moon Landing Regions. News release, 28 October 2024.</li>
+            <li>NASA PDS Geosciences Node. LRO LOLA archive. https://pds-geosciences.wustl.edu/missions/lro/lola.htm</li>
+            <li>NASA Goddard PGDA. Lunar Polar Illumination. https://pgda.gsfc.nasa.gov/products/69</li>
+            <li>Smith, D. E., et al. (2010). The Lunar Orbiter Laser Altimeter investigation on the Lunar Reconnaissance Orbiter mission. <em>Space Science Reviews</em>, 150, 209–241.</li>
+          </ul>
         </div>
       </section>
     </main>

@@ -267,9 +267,24 @@ input:disabled { opacity: 0.4; }
 .glossary dt { font-weight: 700; }
 .glossary dd { margin: 0; color: var(--dim); }
 
+/* ---------- validation & about ---------- */
+.val-summary { font-size: 1.15rem; font-weight: 800; padding: 10px 14px; border-radius: 10px; border: 2px solid var(--line); margin: 8px 0; }
+.val-summary.pass { border-color: var(--both); color: #7fe0c2; }
+.val-summary.fail { border-color: var(--warn); color: #ffb48a; }
+.check { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.check-mark { flex: none; width: 74px; font-weight: 800; }
+.check.pass .check-mark { color: #7fe0c2; }
+.check.fail .check-mark { color: #ffb48a; }
+.prose ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.prose code { background: #0e1422; padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
+.refs { font-size: 0.9rem; color: var(--dim); word-break: break-word; }
+.ro-next { color: var(--dim); font-size: 0.85rem; margin-top: 4px; font-variant-numeric: tabular-nums; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {
   .layout { grid-template-columns: 260px minmax(0, 1fr); }
+  .tabs { flex-wrap: nowrap; overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+  .tab { flex: none; }
   .explore-grid { grid-template-columns: minmax(0, 1fr); }
   .map-wrap { max-height: 50vh; margin: 0 auto; max-width: 560px; }
 }

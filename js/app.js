@@ -3,8 +3,10 @@
 import { SITES, GROUPS, CUSTOM_ID, LAT_MIN, LAT_MAX, getSite } from './sites.js';
 import { getState, setState, subscribe, initStateFromUrl, currentUrl, HOUR, DAY, WINDOW_DAYS } from './state.js';
 import { moonFrame, skyAt, subEarthPoint, subSolarPoint, meanEarthAzimuth } from './astro.js';
-import { visibility } from './metrics.js';
-import { data, loadData, siteModel, horizonNote } from './model.js';
+import { visibility, nextChange, fmtDuration } from './metrics.js';
+import { renderValidationView } from './validation-view.js';
+import { TEAM_NAME, TEAM_MEMBERS } from './team.js';
+import { data, loadData, siteModel, modelKey, horizonNote } from './model.js';
 import { initTimelineView, renderTimelineView } from './timeline-view.js';
 import { initCompareView, renderCompareView } from './compare-view.js';
 import { initFinderView, renderFinderView } from './finder-view.js';
@@ -21,6 +23,7 @@ const VIEWS = [
   { id: 'compare', label: 'Compare' },
   { id: 'finder', label: 'Best window' },
   { id: 'learn', label: 'Learn' },
+  { id: 'validation', label: 'Validation' },
   { id: 'about', label: 'About' },
 ];
 const MINUTE = 60e3;
@@ -195,6 +198,24 @@ function setChip(node, kind, text) {
   node.textContent = text;
 }
 
+// ---------- "how long until it changes?" (mission countdown) ----------
+let lookAhead = { key: '', sun: '', earth: '' };
+function renderLookAhead(s, model) {
+  if (s.playing) { $('#sun-next').textContent = ''; $('#earth-next').textContent = ''; return; } // too costly per animation frame
+  const key = `${modelKey(model)}|${s.t}|${s.emin}`;
+  if (lookAhead.key !== key) {
+    const words = (kind, onText, offText) => {
+      const r = nextChange(model, s.t, s.emin, kind);
+      if (r.at == null) return r.now ? `${onText} for at least the next 60 days.` : `${offText} for at least the next 60 days.`;
+      const span = fmtDuration(Math.max(1, Math.round((r.at - s.t) / HOUR)));
+      return r.now ? `${onText} for another ${span} — until ${fmtDateTime(r.at)}.` : `${offText} for another ${span} — back on ${fmtDateTime(r.at)}.`;
+    };
+    lookAhead = { key, sun: words('sun', 'Sunlight continues', 'Darkness lasts'), earth: words('earth', 'Earth contact continues', 'No Earth contact') };
+  }
+  $('#sun-next').textContent = lookAhead.sun;
+  $('#earth-next').textContent = lookAhead.earth;
+}
+
 // ---------- drawing ----------
 function requestRender() {
   if (frameRequested) return;
@@ -275,6 +296,7 @@ function render() {
   if (view === 'compare') { renderCompareView(); return; }
   if (view === 'finder') { renderFinderView(); return; }
   if (view === 'learn') { renderLearnView(); return; }
+  if (view === 'validation') { renderValidationView(); return; }
   if (view !== 'explore') return;
 
   // ---- the science: where are the Sun and the Earth right now? ----
@@ -298,6 +320,8 @@ function render() {
   if (vis.earthUp) setChip($('#earth-chip'), 'on', '✔ Earth in view — direct radio link possible');
   else if (earthRel >= 0) setChip($('#earth-chip'), 'part', `◐ Earth is up, but below your ${s.emin}° margin — no reliable link`);
   else setChip($('#earth-chip'), 'off', '✖ Earth hidden — no direct radio link');
+
+  renderLookAhead(s, model);
 
   // map
   $('#zoom-in').disabled = s.zoom >= ZOOMS.length - 1;
@@ -360,6 +384,10 @@ async function start() {
   initFinderView(requestRender);
   initLearnView(requestRender, { play: () => setPlaying(true), glossarize });
   initGlossaryTooltips();
+  if (!TEAM_NAME.startsWith('[')) {
+    $('#about-team').textContent = `Team ${TEAM_NAME}${TEAM_MEMBERS.startsWith('[') ? '' : ` — ${TEAM_MEMBERS}`}`;
+    $('#about-team').hidden = false;
+  }
   for (const node of document.querySelectorAll('.hint p, .prose p, .prose li, .note')) glossarize(node);
   subscribe(requestRender);
   render();                                   // show the page at once…

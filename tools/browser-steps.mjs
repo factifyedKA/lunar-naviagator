@@ -50,6 +50,18 @@ export default async function run({ session, base }) {
     if (await page.locator('#tl-chart').count()) await timelineSteps(page, shot, check);
     if (await page.locator('#cmp-table').count()) await planSteps(page, shot, check);
     if (await page.locator('#learn-show').count()) await learnSteps(page, shot, check);
+    if (await page.locator('#val-list').count()) {
+      await page.click('.tab[data-view="validation"]');
+      await page.waitForFunction(() => /checks passed/.test(document.querySelector('#val-summary').textContent)
+        && document.querySelectorAll('#val-list .check').length >= 22, null, { timeout: 60000 }).catch(() => {});
+      const summary = await page.textContent('#val-summary');
+      check(/^All \d+ checks passed\.$/.test(summary), `validation page: ${summary}`);
+      check(await page.locator('#val-terrain tbody tr').count() === 12, 'NASA illumination table has 12 rows');
+      check(await page.locator('#val-horizons tbody tr').count() === 110, 'Horizons table has 110 rows');
+      await shot('14-validation');
+      await page.click('.tab[data-view="explore"]');
+      check(/until|back on|next 60 days/.test(await page.textContent('#sun-next')), 'look-ahead line is shown');
+    }
     // about tab
     await page.click('.tab[data-view="about"]');
     check(await page.isVisible('#view-about'), 'about view opens');

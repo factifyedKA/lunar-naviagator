@@ -170,3 +170,29 @@ export function topWindows(windows, count, missionHours, keyOf = () => '') {
   }
   return picked;
 }
+
+// ---- looking ahead ------------------------------------------------------------------------
+/**
+ * When does the Sun ("sun") or the Earth link ("earth") next switch on or off at a site?
+ * Steps forward hour by hour, then narrows the moment down to the minute.
+ * @returns { now, at } — now = the present state (true = in view); at = time in ms of the
+ *          next change, or null if nothing changes within maxDays.
+ */
+export function nextChange(model, tMs, emin, kind, maxDays = 60) {
+  const inView = (ms) => {
+    const v = visibility(skyAt(moonFrame(ms), model.lat, model.lon, model.heightKm || 0), model, emin);
+    return kind === 'sun' ? v.sunFrac > LIT : v.earthUp;
+  };
+  const now = inView(tMs);
+  for (let h = 1; h <= maxDays * 24; h++) {
+    if (inView(tMs + h * HOUR) === now) continue;
+    let lo = tMs + (h - 1) * HOUR;
+    let hi = tMs + h * HOUR;
+    while (hi - lo > 60e3) {
+      const mid = (lo + hi) / 2;
+      if (inView(mid) === now) lo = mid; else hi = mid;
+    }
+    return { now, at: hi };
+  }
+  return { now, at: null };
+}
