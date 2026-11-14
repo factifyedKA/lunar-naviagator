@@ -11,8 +11,8 @@ export default async function run({ session, base }) {
     await shot('1-start');
     if (await page.locator('#welcome').count()) {
       check(await page.isVisible('#welcome'), 'welcome card greets a first-time visitor');
-      check(await page.locator('.tab:visible').count() === 5, 'Simple mode shows five tabs');
-      check(await page.locator('.site-btn:visible').count() === 9, 'Simple mode lists the nine Artemis regions');
+      check(await page.locator('.tab:visible').count() === 7, 'all seven tabs are visible in Simple mode, including Compare and Validation');
+      check(await page.locator('.site-btn:visible').count() === 13, 'site list shows all 13 sites, the same as the map and the ranking');
       await page.click('#welcome-go');
       check(!(await page.isVisible('#welcome')), 'welcome card closes');
       check(/right now/.test(await page.textContent('#now-verdict')), 'plain verdict line is shown');

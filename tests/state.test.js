@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { SITES, FEATURES, getSite, LAT_MIN, LAT_MAX } from '../js/sites.js';
 import { defaultState, encodeState, decodeState } from '../js/state.js';
+import { readFileSync } from 'node:fs';
 
 test('sites: unique ids, inside the 80S-90S cap, numbered 1..n', () => {
   const ids = new Set(SITES.map((s) => s.id));
@@ -46,4 +47,12 @@ test('state: bad URLs fall back to safe defaults', () => {
   assert.equal(s.zoom, 0);
   assert.equal(s.lat, -80);     // clamped into the map area
   assert.equal(s.view, 'explore');
+});
+
+test('the site list, the map, the ranking and the data files all cover exactly the same sites', () => {
+  const ids = SITES.map((s) => s.id).sort();
+  const json = (name) => JSON.parse(readFileSync(new URL(`../data/${name}`, import.meta.url)));
+  assert.deepEqual(Object.keys(json('horizons.json').sites).sort(), ids);   // terrain horizons (map + sky)
+  assert.deepEqual(Object.keys(json('year-sim.json').sites).sort(), ids);   // whole-year ranking
+  assert.equal(new Set(SITES.map((s) => s.n)).size, ids.length);            // one number per site, as drawn on the map
 });

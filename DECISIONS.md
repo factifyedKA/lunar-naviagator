@@ -208,11 +208,7 @@ The owner opened the live site and found the first screen overwhelming. Simple m
 default) was cut down:
 - A welcome card on a fresh visit says what the tool is for in two sentences, gives three
   steps and three big buttons (explore, best place to land, short tour).
-- Simple mode shows five tabs (Explore, Timeline & scores, Best window, Learn, About);
-  Compare and Validation appear in Expert. A shared link to an expert-only tab switches to
-  Expert automatically.
-- The site list shows only the nine Artemis regions, without coordinates; the reference
-  points appear in Expert (or when one of them is selected).
+- (Superseded, see "Consistency fix" below: tabs and site list are no longer reduced.)
 - Explore keeps only Play, Now and the slider; day-stepping, speed choice, typed date,
   coordinates and PNG buttons are Expert. Time-lapse default is now 1 day per second.
 - A one-line verdict ("Power and radio contact right now") heads the read-outs.
@@ -220,3 +216,11 @@ default) was cut down:
 - The score explanation table and weight sliders are Expert; Simple shows the score, its
   strongest and weakest part, and a pointer to Expert.
 - Bug fixed: a background redraw could wipe a typed latitude while typing the longitude.
+
+## Consistency fix after owner review
+- **Compare and Validation tabs are always visible** (they had been moved to Expert only in
+  the simplification, which made them hard to find). All seven tabs show in both modes.
+- **The site list always shows all 13 sites**, the same 13 that are numbered on the map,
+  ranked in the whole-year table and searched by the best-window finder. Simple mode still
+  hides only the coordinates. A test now checks that the list, the terrain file and the
+  year-simulation file cover exactly the same sites.

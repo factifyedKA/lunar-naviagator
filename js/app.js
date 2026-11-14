@@ -20,10 +20,10 @@ import { $, el, clamp, fmtLat, fmtLon, fmtSigned, fmtDateTime, fmtDate, compass 
 const VIEWS = [
   { id: 'explore', label: 'Explore' },
   { id: 'timeline', label: 'Timeline & scores' },
-  { id: 'compare', label: 'Compare', expert: true },
+  { id: 'compare', label: 'Compare' },
   { id: 'finder', label: 'Best window' },
   { id: 'learn', label: 'Learn' },
-  { id: 'validation', label: 'Validation', expert: true },
+  { id: 'validation', label: 'Validation' },
   { id: 'about', label: 'About' },
 ];
 const MINUTE = 60e3;
@@ -50,7 +50,7 @@ window.addEventListener('unhandledrejection', () => toast('Something went wrong.
 function buildTabs() {
   const nav = $('#tabs');
   for (const v of VIEWS) {
-    nav.append(el('button', { type: 'button', class: v.expert ? 'tab expert-only' : 'tab', 'data-view': v.id, text: v.label,
+    nav.append(el('button', { type: 'button', class: 'tab', 'data-view': v.id, text: v.label,
       onclick: () => setState({ view: v.id, playing: false }) }));
   }
 }
@@ -98,10 +98,7 @@ function wireControls() {
     placeCustom(lat, lon);
   });
   $('#hz').addEventListener('input', (ev) => setState({ hz: Number(ev.target.value) }));
-  $('#mode-simple').addEventListener('click', () => {
-    const v = VIEWS.find((x) => x.id === getState().view);
-    setState({ mode: 'simple', view: v && v.expert ? 'explore' : getState().view }); // Simple has fewer tabs
-  });
+  $('#mode-simple').addEventListener('click', () => setState({ mode: 'simple' }));
   const closeWelcome = (patch) => { showWelcome = false; setState({ ...patch }); };
   $('#welcome-go').addEventListener('click', () => closeWelcome({}));
   $('#welcome-best').addEventListener('click', () => closeWelcome({ view: 'finder' }));
@@ -253,9 +250,6 @@ function render() {
   $('#mode-expert').setAttribute('aria-pressed', String(s.mode === 'expert'));
   const simple = s.mode !== 'expert';
   $('#welcome').hidden = !(showWelcome && simple);
-  // Simple mode lists only the Artemis regions (plus the reference group if one of its sites is selected)
-  const refGroup = $('#group-reference');
-  if (refGroup) refGroup.classList.toggle('expert-only', site.group !== 'reference');
 
   // tabs and views
   const view = VIEWS.some((v) => v.id === s.view) ? s.view : 'explore';
@@ -401,10 +395,7 @@ function render() {
 // ---------- start ----------
 async function start() {
   showWelcome = window.location.hash.length < 2;
-  const s0 = initStateFromUrl();
-  const first = VIEWS.find((v) => v.id === s0.view);
-  if (first && first.expert && s0.mode !== 'expert') setState({ mode: 'expert' }); // a shared link to an expert-only tab
-  const s = getState();
+  const s = initStateFromUrl();
   hasCustom = s.site === CUSTOM_ID;
   buildTabs();
   buildSiteList();
