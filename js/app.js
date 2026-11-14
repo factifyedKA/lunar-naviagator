@@ -6,6 +6,8 @@ import { moonFrame, skyAt, subEarthPoint, subSolarPoint, meanEarthAzimuth } from
 import { visibility, nextChange, fmtDuration } from './metrics.js';
 import { renderValidationView } from './validation-view.js';
 import { TEAM_NAME, TEAM_MEMBERS } from './team.js';
+import { initScenarios, renderScenarios } from './scenarios.js';
+import { initBrief, renderBrief, openBrief } from './brief.js';
 import { data, loadData, siteModel, modelKey, horizonNote } from './model.js';
 import { initTimelineView, renderTimelineView } from './timeline-view.js';
 import { initCompareView, renderCompareView } from './compare-view.js';
@@ -25,6 +27,8 @@ const VIEWS = [
   { id: 'learn', label: 'Learn' },
   { id: 'validation', label: 'Validation' },
   { id: 'about', label: 'About' },
+  { id: 'brief', label: 'Mission brief', hidden: true },       // opened from Timeline & scores / Compare
+  { id: 'worksheet', label: 'Worksheet', hidden: true },       // opened from Learn
 ];
 const MINUTE = 60e3;
 
@@ -49,7 +53,7 @@ window.addEventListener('unhandledrejection', () => toast('Something went wrong.
 // ---------- build the static parts of the page ----------
 function buildTabs() {
   const nav = $('#tabs');
-  for (const v of VIEWS) {
+  for (const v of VIEWS.filter((x) => !x.hidden)) {
     nav.append(el('button', { type: 'button', class: 'tab', 'data-view': v.id, text: v.label,
       onclick: () => setState({ view: v.id, playing: false }) }));
   }
@@ -227,6 +231,18 @@ function renderLookAhead(s, model) {
   $('#earth-next').textContent = lookAhead.earth;
 }
 
+// ---------- classroom worksheet: fill the teacher's key from the real year simulation ----------
+function renderWorksheet() {
+  const sim = data.yearSim;
+  if (!sim) return;
+  const best = (field) => SITES.map((s) => ({ s, v: sim.sites[s.id].terrain[field] })).sort((a, b) => b.v - a.v);
+  const earth = best('earthPct');
+  const sun = best('sunlitPct')[0];
+  const earthTop = earth.filter((e) => earth[0].v - e.v < 0.05).map((e) => e.s.name).join(' and ');
+  $('#ws-key-2').textContent = `In the ${sim.year} ranking (real terrain): most Earth contact — ${earthTop} (${earth[0].v.toFixed(0)}% of the year); `
+    + `most sunlight — ${sun.s.name} (${sun.v.toFixed(0)}%).`;
+}
+
 // ---------- drawing ----------
 function requestRender() {
   if (frameRequested) return;
@@ -259,6 +275,7 @@ function render() {
   for (const v of VIEWS) {
     $(`#view-${v.id}`).hidden = v.id !== view;
     const tab = $(`.tab[data-view="${v.id}"]`);
+    if (!tab) continue;
     if (v.id === view) tab.setAttribute('aria-current', 'page'); else tab.removeAttribute('aria-current');
   }
 
@@ -316,6 +333,8 @@ function render() {
   if (view === 'finder') { renderFinderView(); return; }
   if (view === 'learn') { renderLearnView(); return; }
   if (view === 'validation') { renderValidationView(); return; }
+  if (view === 'brief') { renderBrief(); return; }
+  if (view === 'worksheet') { renderWorksheet(); return; }
   if (view !== 'explore') return;
 
   // ---- the science: where are the Sun and the Earth right now? ----
@@ -347,6 +366,7 @@ function render() {
   else setChip($('#earth-chip'), 'off', '✖ Earth hidden — no direct radio link');
 
   renderLookAhead(s, model);
+  renderScenarios();
 
   // map
   $('#zoom-in').disabled = s.zoom >= ZOOMS.length - 1;
@@ -415,6 +435,13 @@ async function start() {
   initFinderView(requestRender);
   initLearnView(requestRender, { play: () => setPlaying(true), glossarize });
   initGlossaryTooltips();
+  initScenarios(requestRender);
+  initBrief(requestRender);
+  $('#tl-brief').addEventListener('click', () => openBrief('site'));
+  $('#cmp-brief').addEventListener('click', () => openBrief('cmp'));
+  $('#open-worksheet').addEventListener('click', () => setState({ view: 'worksheet' }));
+  $('#ws-back').addEventListener('click', () => setState({ view: 'learn' }));
+  $('#ws-print').addEventListener('click', () => window.print());
   if (!TEAM_NAME.startsWith('[')) {
     $('#about-team').textContent = `Team ${TEAM_NAME}${TEAM_MEMBERS.startsWith('[') ? '' : ` — ${TEAM_MEMBERS}`}`;
     $('#about-team').hidden = false;

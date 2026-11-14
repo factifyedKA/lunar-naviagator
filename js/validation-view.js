@@ -12,6 +12,7 @@ import { $, el } from './ui.js';
 const DAY = 86400e3;
 let started = false;
 const results = []; // { group, name, detail, pass }
+const head = {};    // headline numbers collected by the checks
 const TOL_HORIZONS = 0.05;   // degrees
 const TOL_NASA = 10;         // percentage points
 const EARTH_ANY_PART = -0.95; // Earth's centre may be this far below the horizon while its limb still shows
@@ -44,6 +45,7 @@ async function checkHorizons() {
       el('td', { text: Math.max(dAz, dEl) < TOL_HORIZONS ? '✔ pass' : '✖ fail' }),
     ]));
   }
+  head.horizons = { n: ref.rows.length, worst: Math.max(...[...groups.values()].map((g) => Math.max(g.az, g.el))) };
   for (const [key, g] of groups) {
     add('Sun and Earth positions vs NASA JPL Horizons', key,
       `${g.n} dates, 2026–2028: largest difference ${f(g.az)}° in azimuth, ${f(g.el)}° in elevation (limit ${TOL_HORIZONS}°)`,
@@ -108,7 +110,7 @@ async function checkTerrain() {
   const models = sites.map((s) => { const h = data.horizons.sites[s.id]; return { lat: h.lat, lon: h.lon, heightKm: h.height / 1000, mask: h.mask }; });
   const series = await seriesJob(models, start, 8760, EARTH_ANY_PART);
   const body = $('#val-terrain tbody');
-  let worstSun = 0, worstEarth = 0;
+  let worstSun = 0, worstEarth = 0, sumSun = 0, sumEarth = 0;
   sites.forEach((s, i) => {
     const ours = summarize(series[i]);
     const n = ref.sites[s.id];
@@ -116,6 +118,8 @@ async function checkTerrain() {
     const dEarth = ours.earthPct - n.earthPct;
     worstSun = Math.max(worstSun, Math.abs(dSun));
     worstEarth = Math.max(worstEarth, Math.abs(dEarth));
+    sumSun += Math.abs(dSun);
+    sumEarth += Math.abs(dEarth);
     const ok = Math.abs(dSun) <= TOL_NASA && Math.abs(dEarth) <= TOL_NASA;
     body.append(el('tr', {}, [
       el('th', { scope: 'row', text: s.name }),
@@ -124,6 +128,7 @@ async function checkTerrain() {
       el('td', { text: ok ? '✔ pass' : '✖ fail' }),
     ]));
   });
+  head.lola = { n: sites.length, worstSun, worstEarth, meanSun: sumSun / sites.length, meanEarth: sumEarth / sites.length };
   add(G, 'Average sunlight at 12 site viewpoints', `largest difference from NASA’s 18.6-year map: ${f(worstSun, 1)} percentage points (limit ${TOL_NASA})`, worstSun <= TOL_NASA);
   add(G, 'Earth visibility at 12 site viewpoints', `largest difference from NASA’s 18.6-year map: ${f(worstEarth, 1)} percentage points (limit ${TOL_NASA})`, worstEarth <= TOL_NASA);
   $('#val-terrain-note').textContent = `Reference: ${ref.source}; ${ref.method}. Retrieved ${ref.retrieved}. `
@@ -135,6 +140,7 @@ async function checkTerrain() {
   const floors = Object.entries(ref.craterFloors);
   const masks = await Promise.all(floors.map(([, p]) => maskJob(p.lat, p.lon)));
   const fs = await seriesJob(floors.map(([, p], i) => ({ lat: p.lat, lon: p.lon, heightKm: masks[i].height / 1000, mask: masks[i].mask })), start, 8760, 0);
+  head.floors = floors.length;
   floors.forEach(([name, p], i) => {
     const ours = summarize(fs[i]).sunlitPct;
     add('Permanently shadowed regions', name, `NASA map: ${f(p.sunPct, 1)}% (permanent shadow). Ours for 2027: ${f(ours, 1)}% sunlit`, p.sunPct === 0 && ours < 0.05);
@@ -156,6 +162,23 @@ function show() {
   const sum = $('#val-summary');
   sum.className = `val-summary ${failed ? 'fail' : 'pass'}`;
   sum.textContent = failed ? `${results.length - failed} of ${results.length} checks passed, ${failed} failed.` : `All ${results.length} checks passed.`;
+
+  // headline in plain words: the largest differences found against the NASA references
+  const parts = [];
+  if (head.horizons) {
+    parts.push(`Against NASA JPL Horizons (${head.horizons.n} comparisons), our Sun and Earth directions are never more than ${f(head.horizons.worst)}° off`
+      + ` — the Sun itself looks about 0.5° wide from the Moon, so that is roughly 1/${Math.round(0.53 / head.horizons.worst)} of its width.`);
+  }
+  if (head.lola) {
+    parts.push(`Against NASA’s LOLA illumination maps (${head.lola.n} sites), our yearly sunlight figure is at most ${f(head.lola.worstSun, 1)} percentage points away`
+      + ` (${f(head.lola.meanSun, 1)} on average), and Earth visibility at most ${f(head.lola.worstEarth, 1)} points away (${f(head.lola.meanEarth, 1)} on average).`);
+  }
+  if (head.floors && !results.some((r) => r.group === 'Permanently shadowed regions' && !r.pass)) {
+    parts.push(`All ${head.floors} crater floors that NASA maps as permanently shadowed also receive 0% sunlight here.`);
+  }
+  const hl = $('#val-headline');
+  hl.hidden = parts.length === 0;
+  hl.textContent = parts.length ? `In plain words: ${parts.join(' ')}` : '';
 }
 
 export async function renderValidationView() {

@@ -224,3 +224,20 @@ default) was cut down:
   ranked in the whole-year table and searched by the best-window finder. Simple mode still
   hides only the coordinates. A test now checks that the list, the terrain file and the
   year-simulation file cover exactly the same sites.
+
+## Enhancement round
+- **Safety:** tag `v1-safe` marks commit e56fcb2. GitHub refused the tag upload from the
+  build session (only the working branch may be pushed), so the tag is local; the commit
+  itself is in the branch history on GitHub and can be restored from there.
+- **Two angles in the read-out:** "above the local horizon (terrain)" decides visibility;
+  "elevation above a flat surface" ignores terrain. Both are always shown, with an ⓘ tooltip.
+- **Scenario cards (Explore):** three one-tap questions. Each runs the same best-window
+  finder over all 13 sites with the current settings and weights; the answer names the
+  best site and date and lists other sites that are equally good at their own best dates
+  (ties at 100 are common in polar summer). "2027" = 1 Jan – 31 Dec 2027.
+- **Mission Brief:** one A4 page drawn on a canvas (so PNG and print are identical), opened
+  from Timeline & scores (one site) or Compare (up to four). White page; charts keep their
+  dark panel because the colours are designed for it. Always prints the limitations.
+- **Validation headline:** computed live from the same checks, never typed in by hand.
+- **Classroom worksheet:** four questions; the teacher's key for question 2 is filled from
+  the real year simulation, the other notes are qualitative.

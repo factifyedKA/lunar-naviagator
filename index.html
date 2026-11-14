@@ -108,6 +108,15 @@
             to watch them move.</p>
         </details>
 
+        <div class="card scenarios">
+          <h3>Quick questions</h3>
+          <div id="scenario-cards" class="scenario-cards"></div>
+          <div id="scenario-answer" class="scenario-answer" role="status" hidden>
+            <p id="scenario-text"></p>
+            <button type="button" class="btn small" id="scenario-open" hidden>See the full ranking →</button>
+          </div>
+        </div>
+
         <div class="explore-grid">
           <div class="card map-card">
             <div class="card-head">
@@ -209,7 +218,7 @@
 
         <div class="card">
           <div class="card-head"><h3>Power and communication timeline · <span id="tl-site"></span></h3>
-            <div class="zoom"><button type="button" class="btn small" id="tl-csv">Download CSV</button><button type="button" class="btn small" id="tl-png">Save PNG</button></div></div>
+            <div class="zoom"><button type="button" class="btn small" id="tl-csv">Download CSV</button><button type="button" class="btn small" id="tl-png">Save PNG</button><button type="button" class="btn small" id="tl-brief">Mission brief</button></div></div>
           <div class="timebar">
             <label class="field time-field">Start date (UTC)
               <input type="date" id="tl-start" min="1970-01-02" max="2098-12-31">
@@ -300,7 +309,7 @@
           </div>
         </div>
         <div class="card">
-          <div class="card-head"><h3>Timelines side by side</h3><button type="button" class="btn small" id="cmp-png">Save PNG</button></div>
+          <div class="card-head"><h3>Timelines side by side</h3><div class="zoom"><button type="button" class="btn small" id="cmp-png">Save PNG</button><button type="button" class="btn small" id="cmp-brief">Mission brief</button></div></div>
           <p id="cmp-empty" class="note" hidden>Choose at least one site above.</p>
           <div id="cmp-charts"></div>
           <p class="caption" id="cmp-caption"></p>
@@ -390,6 +399,69 @@
           <p class="caption">Words with a dotted underline anywhere in the tool can be tapped for the same explanations.</p>
           <dl id="glossary-list" class="glossary" data-no-gloss></dl>
         </div>
+        <div class="card">
+          <h3>For teachers</h3>
+          <p>A one-page worksheet with four questions that students answer using this tool.</p>
+          <button type="button" class="btn" id="open-worksheet">Open the printable classroom worksheet</button>
+        </div>
+      </section>
+
+      <!-- MISSION BRIEF (opened from Timeline & scores or Compare) -->
+      <section class="view" id="view-brief" aria-labelledby="brief-title" hidden>
+        <div class="card no-print">
+          <div class="card-head">
+            <h2 id="brief-title" class="h3">Mission brief</h2>
+            <div class="zoom">
+              <button type="button" class="btn" id="brief-back">← Back</button>
+              <button type="button" class="btn" id="brief-png">Save PNG</button>
+              <button type="button" class="btn primary" id="brief-print">Print</button>
+            </div>
+          </div>
+          <p class="caption">One page with the key numbers, the timeline and the limitations, ready to save or print. It uses the dates and settings of the tab you came from.</p>
+          <p id="brief-status" class="note" role="status"></p>
+        </div>
+        <canvas id="brief-canvas" class="brief-canvas" role="img" aria-label="Mission brief"></canvas>
+      </section>
+
+      <!-- CLASSROOM WORKSHEET (opened from Learn) -->
+      <section class="view" id="view-worksheet" aria-labelledby="ws-title" hidden>
+        <div class="card no-print">
+          <div class="card-head">
+            <h2 class="h3">Classroom worksheet</h2>
+            <div class="zoom">
+              <button type="button" class="btn" id="ws-back">← Back to Learn</button>
+              <button type="button" class="btn primary" id="ws-print">Print</button>
+            </div>
+          </div>
+        </div>
+        <div class="sheet" data-no-gloss>
+          <h2 id="ws-title">Moon Mission Planner — worksheet</h2>
+          <p class="sheet-line">Name: ____________________________ &nbsp; Date: ______________</p>
+          <p>You are planning a landing near the Moon’s south pole. A lander needs <strong>sunlight</strong> for power and a
+            view of the <strong>Earth</strong> for radio. Use the Lunar Landing Site Navigator to answer.</p>
+          <ol class="sheet-questions">
+            <li><strong>Explore.</strong> Tap <em>Malapert Massif</em> on the map and press <em>Play</em>. Does the Sun ever climb
+              high in the sky? Describe how it moves.<span class="answer-lines"></span></li>
+            <li><strong>Timeline &amp; scores.</strong> Scroll to the whole-year ranking. Which site sees the Earth for the largest
+              share of the year? Which site gets the most sunlight?<span class="answer-lines"></span></li>
+            <li><strong>Learn, step 4.</strong> Tap “Show me Shackleton’s dark floor”. How much sunlight does the crater floor
+              get? Why might scientists still want to go there?<span class="answer-lines"></span></li>
+            <li><strong>Best window.</strong> Plan a 7-day mission. Which site and start date does the tool suggest? Now change
+              it to 30 days. Does the answer change? Why do you think so?<span class="answer-lines"></span></li>
+          </ol>
+          <div class="sheet-key">
+            <h3>Teacher’s notes</h3>
+            <ol>
+              <li>No. The Sun stays within a few degrees of the horizon and slowly circles it about once every 29.5 days,
+                because the Moon’s axis is tilted by only 1.5°.</li>
+              <li id="ws-key-2">Read the answer from the ranking table in the tool.</li>
+              <li>0%: it is a permanently shadowed region. It is extremely cold, so water ice may survive there.</li>
+              <li>Answers depend on the dates searched. Longer missions must live through more of the monthly dark and
+                silent periods, so sites with short nights and steady Earth contact move up.</li>
+            </ol>
+            <p class="caption">Site positions in the tool are approximate and the terrain model has a 240 m grid; see the About tab.</p>
+          </div>
+        </div>
       </section>
 
       <!-- VALIDATION VIEW -->
@@ -404,6 +476,7 @@
         <div class="card">
           <h3>Automated checks</h3>
           <p id="val-summary" class="val-summary" role="status">Waiting for the terrain data…</p>
+          <p id="val-headline" class="val-headline" hidden></p>
           <div id="val-list"></div>
         </div>
         <div class="card">

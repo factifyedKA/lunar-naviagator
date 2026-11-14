@@ -58,6 +58,7 @@ export default async function run({ session, base }) {
     if (await page.locator('#tl-chart').count()) await timelineSteps(page, shot, check);
     if (await page.locator('#cmp-table').count()) await planSteps(page, shot, check);
     if (await page.locator('#learn-show').count()) await learnSteps(page, shot, check);
+    if (await page.locator('#scenario-cards').count()) await impactSteps(page, shot, check);
     if (await page.locator('#val-list').count()) {
       await page.click('.tab[data-view="validation"]');
       await page.waitForFunction(() => /checks passed/.test(document.querySelector('#val-summary').textContent)
@@ -65,6 +66,8 @@ export default async function run({ session, base }) {
       const summary = await page.textContent('#val-summary');
       check(/^All \d+ checks passed\.$/.test(summary), `validation page: ${summary}`);
       check(await page.locator('#val-terrain tbody tr').count() === 12, 'NASA illumination table has 12 rows');
+      const hl = await page.textContent('#val-headline');
+      check(/never more than 0\.0\d+° off/.test(hl) && /percentage points away/.test(hl) && /permanently shadowed/.test(hl), `validation headline is written (${hl.slice(0, 80)}…)`);
       check(await page.locator('#val-horizons tbody tr').count() === 110, 'Horizons table has 110 rows');
       await shot('14-validation');
       await page.click('.tab[data-view="explore"]');
@@ -255,4 +258,43 @@ async function learnSteps(page, shot, check) {
   await page.click('#share-btn');
   check(await page.isVisible('#toast'), 'share button gives feedback');
   check(page.url().includes('m=x'), 'expert mode is kept in the link');
+}
+
+// Step 2 of the enhancement round: scenario cards, mission brief, worksheet
+async function impactSteps(page, shot, check) {
+  await page.click('.tab[data-view="explore"]');
+  await page.click('.site-btn[data-site="malapert"]');
+  check(await page.locator('.scenario').count() === 3, 'three scenario cards');
+  await page.click('.scenario[data-scenario="week"]');
+  await page.waitForFunction(() => /Best 7-day landing window in 2027: /.test(document.querySelector('#scenario-text').textContent), null, { timeout: 30000 })
+    .catch(() => check(false, 'scenario card answers'));
+  check(/landing on \d+ \w+ 2027/.test(await page.textContent('#scenario-text')), 'scenario answer is one plain sentence with a date');
+  await page.locator('#scenario-cards').scrollIntoViewIfNeeded();
+  await shot('15-scenario');
+  await page.click('#scenario-open');
+  check(await page.isVisible('#view-finder') && (await page.inputValue('#fw-length')) === '7', 'scenario link opens the full finder view');
+  // mission brief from the timeline and from compare
+  await page.click('.tab[data-view="timeline"]');
+  await page.click('#tl-brief');
+  await page.waitForFunction(() => document.querySelector('#brief-canvas').getAttribute('aria-label').includes('score'), null, { timeout: 20000 })
+    .catch(() => check(false, 'mission brief is drawn'));
+  const size = await page.evaluate(() => { const c = document.querySelector('#brief-canvas'); return [c.width, c.height]; });
+  check(size[0] === 1588 && size[1] === 2246, 'brief is one A4 page');
+  const [d] = await Promise.all([page.waitForEvent('download', { timeout: 8000 }), page.click('#brief-png')]);
+  check(d.suggestedFilename() === 'mission-brief.png', 'brief saves as PNG');
+  await d.saveAs(new URL('../docs/mission-brief-example.png', import.meta.url).pathname);
+  await page.click('#brief-back');
+  check(await page.isVisible('#view-timeline'), 'brief back button returns');
+  await page.click('.tab[data-view="compare"]');
+  await page.click('#cmp-brief');
+  await page.waitForFunction(() => (document.querySelector('#brief-canvas').getAttribute('aria-label').match(/score/g) || []).length >= 2, null, { timeout: 20000 })
+    .catch(() => check(false, 'compare brief lists several sites'));
+  await shot('16-brief-compare');
+  // worksheet
+  await page.click('.tab[data-view="learn"]');
+  await page.click('#open-worksheet');
+  check(await page.locator('.sheet-questions li').count() === 4, 'worksheet has four questions');
+  check(/most Earth contact — .*most sunlight — /.test(await page.textContent('#ws-key-2')), "teacher's key is filled from the year simulation");
+  await shot('17-worksheet');
+  await page.click('#ws-back');
 }
