@@ -104,6 +104,10 @@ async function skySteps(page, shot, check) {
   const before = await page.textContent('#sun-line');
   check(/Sun is \d+\.\d° (above|below) the horizon/.test(before), `sun sentence reads well (${before})`);
   check(/Earth is \d+\.\d° (above|below) the horizon/.test(await page.textContent('#earth-line')), 'earth sentence reads well');
+  check(/above the local horizon \(terrain\) · [+−]\d+\.\d\d° elevation above a flat surface/.test(await page.textContent('#sun-angles')), `two angles are labelled (${await page.textContent('#sun-angles')})`);
+  await page.locator('.info-btn').first().click();
+  check((await page.textContent('#term-pop')).includes('real skyline'), 'angle tooltip explains the difference');
+  await page.keyboard.press('Escape');
   await page.click('#step-fwd');
   check((await page.textContent('#sun-line')) !== before, 'stepping a day changes the Sun');
   await page.locator('#time-slider').focus();

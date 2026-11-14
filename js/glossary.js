@@ -4,6 +4,7 @@
 export const GLOSSARY = [
   { term: 'Horizon', match: ['horizon'], text: 'The line where the ground meets the sky. Anything below it is hidden by the ground.' },
   { term: 'Elevation', match: ['elevation'], text: 'How high something is in the sky, measured in degrees up from the horizon. 0° is on the horizon, 90° is straight overhead.' },
+  { term: 'Two ways to measure height', match: [], text: '“Above the local horizon” is measured from the real skyline in that direction, so it decides whether you can actually see the Sun or the Earth. “Elevation above a flat surface” ignores hills and crater rims, as if the Moon were perfectly smooth.' },
   { term: 'Azimuth', match: ['azimuth'], text: 'The compass direction of something in the sky, in degrees: 0° is north, 90° east, 180° south, 270° west.' },
   { term: 'Degree (°)', match: [], text: 'A unit for angles. Your fist held at arm’s length covers about 10°. The Sun and the Earth, seen from the Moon, are about 0.5° and 2° wide.' },
   { term: 'Libration', match: ['libration'], text: 'A slow monthly wobble of the Moon as seen from Earth. It makes the Earth drift up and down and side to side in the Moon’s sky.' },

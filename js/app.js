@@ -200,7 +200,10 @@ function getTrail(t0, lat, lon, heightKm) {
 
 // ---------- words for the read-outs ----------
 const aboveBelow = (name, rel) => `${name} is ${Math.abs(rel).toFixed(1)}° ${rel >= 0 ? 'above' : 'below'} the horizon`;
-const direction = (b) => `Direction ${compass(b.az)} · azimuth ${b.az.toFixed(0)}° · elevation ${fmtSigned(b.el, 2)}`;
+const direction = (b) => `Direction ${compass(b.az)} · azimuth ${b.az.toFixed(0)}°`;
+// the two angles, spelled out so they cannot be mixed up
+const twoAngles = (rel, el, model) => `${fmtSigned(rel, 1)} above the local horizon (${model.mask ? 'terrain' : 'flat model'}) · `
+  + `${fmtSigned(el, 2)} elevation above a flat surface`;
 function setChip(node, kind, text) {
   node.className = `chip ${kind}`;
   node.textContent = text;
@@ -331,12 +334,14 @@ function render() {
       : vis.earthUp ? '✖ No sunlight, but ✔ radio contact right now' : '✖ No power and ✖ no radio contact right now';
   $('#sun-line').textContent = aboveBelow('Sun', sunRel);
   $('#sun-sub').textContent = direction(now.sun);
+  $('#sun-angles').textContent = twoAngles(sunRel, now.sun.el, model);
   if (vis.eclipse) setChip($('#sun-chip'), 'part', '~ Eclipse — the Earth is covering the Sun, little or no solar power');
   else if (sunFrac >= 0.999) setChip($('#sun-chip'), 'on', '✔ Full Sun — solar power available');
   else if (sunFrac > 0.001) setChip($('#sun-chip'), 'part', `~ Sun partly hidden — ${Math.round(sunFrac * 100)}% of its disc shows`);
   else setChip($('#sun-chip'), 'off', '✖ Sun hidden — no solar power');
   $('#earth-line').textContent = aboveBelow('Earth', earthRel);
   $('#earth-sub').textContent = direction(now.earth);
+  $('#earth-angles').textContent = twoAngles(earthRel, now.earth.el, model);
   if (vis.earthUp) setChip($('#earth-chip'), 'on', '✔ Earth in view — direct radio link possible');
   else if (earthRel >= 0) setChip($('#earth-chip'), 'part', `~ Earth is up, but below your ${s.emin}° margin — no reliable link`);
   else setChip($('#earth-chip'), 'off', '✖ Earth hidden — no direct radio link');
