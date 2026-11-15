@@ -2,7 +2,7 @@
 
 Rules followed: maximum 7 slides including the title; English only; big readable text and
 few words; no images of people under 18 (the slides use only app screenshots).
-Replace **[TEAM NAME]** and **[MEMBER NAMES]** before presenting.
+Team: **--pathfinder--** · Member: **Kartik Agarwal**.
 
 Screenshots to use (already in the repository):
 `docs/screenshot-explore.png`, `docs/screenshot-timeline.png`, `docs/screenshot-finder.png`,
@@ -16,10 +16,10 @@ Design tip: dark background, white text, at least 32 pt, one idea per slide.
 - Lunar Landing Site Navigator
 - *Find the light. Keep the link.*
 - NASA Space Apps Challenge 2026 · Challenge: Lunar Landing Site Navigator
-- Team **[TEAM NAME]** — **[MEMBER NAMES]**
+- Team **--pathfinder--** — **Kartik Agarwal**
 
 **Speaker notes**
-"We are [TEAM NAME]. Our project is the Lunar Landing Site Navigator, for the challenge of
+"I am Kartik Agarwal, team --pathfinder--. My project is the Lunar Landing Site Navigator, for the challenge of
 the same name. It helps anyone decide where and when to land near the Moon's south pole."
 
 ---
@@ -110,7 +110,7 @@ and shows pass or fail. Where we simplify, we say so on screen."
 - For planners, classrooms and the public
 - Next: finer terrain, relay satellites, other poles and worlds
 - Try it: factifyedka.github.io/lunar-naviagator
-- Team **[TEAM NAME]**
+- Team **--pathfinder--** · Kartik Agarwal
 
 **Speaker notes**
 "It is free, needs no login and runs on a tablet, even without a network after the first
@@ -125,7 +125,7 @@ try it yourself."
 
 | Time | Picture | Voice-over |
 |------|---------|------------|
-| 0–5 s | Title card: project name, tagline, team name | "We are [TEAM NAME], and this is the Lunar Landing Site Navigator." |
+| 0–5 s | Title card: project name, tagline, team name | "I am Kartik Agarwal, team --pathfinder--, and this is the Lunar Landing Site Navigator." |
 | 5–11 s | Map, then time-lapse of the Sun skimming the horizon | "At the Moon's south pole the Sun skims the horizon and the Earth plays hide-and-seek. No Sun, no power. No Earth, no radio." |
 | 11–16 s | Tap a site; horizon view with real skyline | "Find the light. Keep the link. Tap any landing site to see the Sun and the Earth against the real skyline." |
 | 16–24 s | Timeline strips, best-window ranking, then a spin of the 3D Moon | "Using NASA's lunar terrain data, it shows when you have power and contact, scores every site, and finds your best landing window." |

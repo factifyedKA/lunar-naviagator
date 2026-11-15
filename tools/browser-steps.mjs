@@ -86,6 +86,7 @@ export default async function run({ session, base }) {
     // about tab
     await page.click('.tab[data-view="about"]');
     check(await page.isVisible('#view-about'), 'about view opens');
+    check((await page.textContent('#about-team')).includes('--pathfinder--') && (await page.textContent('#about-team')).includes('Kartik Agarwal'), 'About shows the team name and member');
     await shot('9-about');
   });
 

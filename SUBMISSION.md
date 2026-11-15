@@ -1,12 +1,12 @@
 # SUBMISSION — ready-to-paste texts
 
 NASA Space Apps Challenge 2026 · Challenge: **Lunar Landing Site Navigator**
-Team: **[TEAM NAME]** · Members: **[MEMBER NAMES]**
+Team: **--pathfinder--** · Member: **Kartik Agarwal**
 
 - Live project: https://factifyedka.github.io/lunar-naviagator/
 - Code: https://github.com/factifyedKA/lunar-naviagator
 
-> Before pasting: replace [TEAM NAME] and [MEMBER NAMES], and open the live link once to
+> Before pasting: open the live link once to
 > confirm it loads without a login.
 
 ---
@@ -129,8 +129,8 @@ requests: astronomy-engine (ephemeris) and Three.js (3D Moon tab only).
 
 ## Use of Artificial Intelligence
 Claude, an AI model made by Anthropic, was used to help write the code, the automated
-tests and the documentation of this project. I and my team made the decisions, tested the
-tool and checked the results. No AI-generated images, audio or video are used. The numbers
+tests and the documentation of this project. I made the decisions, tested the tool and
+checked the results. No AI-generated images, audio or video are used. The numbers
 shown in the tool do not come from an AI: they are computed from NASA data and published
 models, and the Validation page compares them with NASA reference values every time it is
 opened. The simple diagrams in the Learn tour, the app icon and the 3D Moon texture were
